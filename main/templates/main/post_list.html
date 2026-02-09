@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtisticSound - Posts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .post-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+        }
+        
+        .post-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .post-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        .post-author {
+            color: #764ba2;
+            font-weight: bold;
+        }
+        
+        .post-date {
+            color: #999;
+        }
+        
+        .post-excerpt {
+            color: #555;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .empty-message {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+        
+        .admin-link {
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .admin-link a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .admin-link a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 ArtisticSound</h1>
+            <p>Share your artistic posts</p>
+        </header>
+        
+        {% if posts %}
+            <div class="posts-grid">
+                {% for post in posts %}
+                    <a href="{% url 'main:post_detail' post.pk %}" class="post-card">
+                        <div class="post-title">{{ post.title }}</div>
+                        <div class="post-meta">
+                            <span class="post-author">By {{ post.author }}</span>
+                            <span class="post-date">• {{ post.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="post-excerpt">{{ post.content }}</div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-message">
+                <p>No posts yet. Create your first post!</p>
+            </div>
+        {% endif %}
+        
+        <div class="admin-link">
+            <a href="/admin/">Admin Panel</a>
+        </div>
+    </div>
+</body>
+</html>

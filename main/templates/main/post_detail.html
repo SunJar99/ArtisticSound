@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post.title }} - ArtisticSound</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .back-link {
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+            transition: opacity 0.3s;
+        }
+        
+        .back-link:hover {
+            opacity: 0.8;
+        }
+        
+        .post-container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .post-title {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .post-meta {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            color: #666;
+        }
+        
+        .post-author {
+            color: #764ba2;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .post-date {
+            color: #999;
+            margin-left: 15px;
+        }
+        
+        .post-content {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #555;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .action-buttons {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+            text-align: center;
+        }
+        
+        .action-buttons a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            margin: 0 10px;
+            display: inline-block;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .action-buttons a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'main:post_list' %}" class="back-link">← Back to Posts</a>
+        
+        <div class="post-container">
+            <h1 class="post-title">{{ post.title }}</h1>
+            
+            <div class="post-meta">
+                <span class="post-author">✍️ {{ post.author }}</span>
+                <span class="post-date">📅 {{ post.created_at|date:"F j, Y \a\t g:i A" }}</span>
+            </div>
+            
+            <div class="post-content">{{ post.content }}</div>
+            
+            <div class="action-buttons">
+                <a href="{% url 'main:post_list' %}">Back to Posts</a>
+                <a href="/admin/">Admin Panel</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
