@@ -15,6 +15,47 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .header-logo {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: opacity 0.3s;
+        }
+        
+        .header a:hover {
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            flex: 1;
             padding: 20px;
         }
         
@@ -73,6 +114,43 @@
             color: #555;
             white-space: pre-wrap;
             word-wrap: break-word;
+            margin-bottom: 30px;
+        }
+        
+        .video-section {
+            margin: 30px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .post-tags {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .post-tags strong {
+            color: #333;
+            margin-right: 15px;
+        }
+        
+        .tag-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-right: 10px;
+            margin-bottom: 8px;
+            transition: background 0.3s;
+            font-size: 0.9em;
+        }
+        
+        .tag-link:hover {
+            background: #764ba2;
         }
         
         .action-buttons {
@@ -100,6 +178,14 @@
     </style>
 </head>
 <body>
+    <div class="header">
+        <a href="{% url 'main:home' %}" class="header-logo">🎵 ArtisticSound</a>
+        <div class="header-links">
+            <a href="/auth/register/">Create Account</a>
+            <a href="/admin/">Login</a>
+        </div>
+    </div>
+    <div class="main-content">
     <div class="container">
         <a href="{% url 'main:post_list' %}" class="back-link">← Back to Posts</a>
         
@@ -107,16 +193,38 @@
             <h1 class="post-title">{{ post.title }}</h1>
             
             <div class="post-meta">
-                <span class="post-author">✍️ {{ post.author }}</span>
+                <span class="post-author">✍️ {{ post.author.username }}</span>
                 <span class="post-date">📅 {{ post.created_at|date:"F j, Y \a\t g:i A" }}</span>
             </div>
             
-            <div class="post-content">{{ post.content }}</div>
+            {% if post.youtube_url %}
+                <div class="video-section">
+                    <iframe width="100%" height="500" 
+                        src="https://www.youtube.com/embed/{{ post.youtube_url|safe }}" 
+                        title="YouTube video player" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            {% endif %}
+            
+            <div class="post-content">{{ post.description }}</div>
+            
+            {% if post.tags %}
+                <div class="post-tags">
+                    <strong>Tags:</strong>
+                    {% for tag in post.get_tags_list %}
+                        <a href="{% url 'main:post_list' %}?q={{ tag }}" class="tag-link">#{{ tag }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
             
             <div class="action-buttons">
                 <a href="{% url 'main:post_list' %}">Back to Posts</a>
                 <a href="/admin/">Admin Panel</a>
             </div>
+        </div>
         </div>
     </div>
 </body>
