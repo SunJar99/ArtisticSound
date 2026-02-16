@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtisticSound - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .header-logo {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: opacity 0.3s;
+        }
+        
+        .header a:hover {
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin: 10px;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .cta-button.secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .cta-button.secondary:hover {
+            background: #f8f8f8;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'main:home' %}" class="header-logo">🎵 ArtisticSound</a>
+        <div class="header-links">
+            <a href="/auth/register/">Create Account</a>
+            <a href="/admin/">Login</a>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="container">
+        <div class="logo">🎵</div>
+        <h1>Artistic Sound</h1>
+        <p>Welcome to Artistic Sound - a place to share your creative thoughts and artistic expressions.</p>
+        
+        <div>
+            <a href="{% url 'main:post_list' %}" class="cta-button">View Posts</a>
+            <a href="{% url 'main:jobs' %}" class="cta-button">View Jobs</a>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2026 Artistic Sound. All rights reserved.</p>     
+        </div>
+        </div>
+    </div>
+</body>
+</html>
