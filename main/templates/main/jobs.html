@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jobs - ArtisticSound</title>
+    <meta http-equiv="refresh" content="0; url={% url 'main:project_list' %}">
+    <title>Redirecting to Projects...</title>
+</head>
+<body>
+    <p>If you are not redirected, <a href="{% url 'main:project_list' %}">click here</a>.</p>
+</body>
+</html>
     <style>
         * {
             margin: 0;
@@ -160,8 +165,15 @@
     <div class="header">
         <a href="{% url 'main:home' %}" class="header-logo">🎵 ArtisticSound</a>
         <div class="header-links">
-            <a href="/auth/register/">Create Account</a>
-            <a href="/admin/">Login</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'main:post_list' %}">Browse Posts</a>
+                <a href="{% url 'main:project_list' %}">Find Projects</a>
+                <span style="color: white;">Welcome, {{ user.username }}!</span>
+                <a href="{% url 'main:logout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'main:register' %}">Create Account</a>
+                <a href="{% url 'main:login' %}">Login</a>
+            {% endif %}
         </div>
     </div>
     <div class="main-content">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Post - ArtisticSound</title>
+    <title>Post a Project - ArtisticSound</title>
     <style>
         * {
             margin: 0;
@@ -85,7 +85,7 @@
             font-weight: 500;
         }
         
-        input, textarea {
+        input, textarea, select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -96,14 +96,14 @@
             box-sizing: border-box;
         }
         
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #667eea;
         }
         
         textarea {
             resize: vertical;
-            min-height: 150px;
+            min-height: 120px;
         }
         
         .helptext {
@@ -221,7 +221,7 @@
     </div>
     <div class="main-content">
         <div class="container">
-            <h1>✨ Create a New Post</h1>
+            <h1>💼 Post a New Project</h1>
             
             <form method="POST">
                 {% csrf_token %}
@@ -233,7 +233,7 @@
                 {% endif %}
                 
                 <div class="form-group">
-                    <label for="{{ form.title.id_for_label }}">Title</label>
+                    <label for="{{ form.title.id_for_label }}">Project Title</label>
                     {{ form.title }}
                     {% if form.title.errors %}
                         {% for error in form.title.errors %}
@@ -253,11 +253,43 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="{{ form.youtube_url.id_for_label }}">YouTube URL (Optional)</label>
-                    {{ form.youtube_url }}
-                    <span class="helptext">Paste the URL of the YouTube video you want to embed</span>
-                    {% if form.youtube_url.errors %}
-                        {% for error in form.youtube_url.errors %}
+                    <label for="{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        {% for error in form.category.errors %}
+                            <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.budget.id_for_label }}">Budget</label>
+                    {{ form.budget }}
+                    <span class="helptext">e.g., $500-$1000 or Negotiable</span>
+                    {% if form.budget.errors %}
+                        {% for error in form.budget.errors %}
+                            <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.timeline.id_for_label }}">Timeline</label>
+                    {{ form.timeline }}
+                    <span class="helptext">e.g., 2-4 weeks or ASAP</span>
+                    {% if form.timeline.errors %}
+                        {% for error in form.timeline.errors %}
+                            <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.requirements.id_for_label }}">Project Requirements</label>
+                    {{ form.requirements }}
+                    <span class="helptext">Please provide detailed information about what you need</span>
+                    {% if form.requirements.errors %}
+                        {% for error in form.requirements.errors %}
                             <div class="error-message">{{ error }}</div>
                         {% endfor %}
                     {% endif %}
@@ -266,7 +298,7 @@
                 <div class="form-group">
                     <label for="{{ form.tags.id_for_label }}">Tags</label>
                     {{ form.tags }}
-                    <span class="helptext">Separate multiple tags with commas (e.g., music, art, creative)</span>
+                    <span class="helptext">Optional: Separate tags with commas (e.g., urgent, flexible, remote)</span>
                     {% if form.tags.errors %}
                         {% for error in form.tags.errors %}
                             <div class="error-message">{{ error }}</div>
@@ -274,10 +306,10 @@
                     {% endif %}
                 </div>
                 
-                <button type="submit">Create Post</button>
+                <button type="submit">Post Project</button>
             </form>
             
-            <a href="{% url 'main:post_list' %}" class="back-link">← Back to Posts</a>
+            <a href="{% url 'main:project_list' %}" class="back-link">← Back to Projects</a>
         </div>
     </div>
     
@@ -293,7 +325,7 @@
                     <li><a href="{% url 'main:home' %}">Home</a></li>
                     <li><a href="{% url 'main:post_list' %}">Browse Posts</a></li>
                     <li><a href="{% url 'main:project_list' %}">Find Projects</a></li>
-                    <li><a href="{% url 'main:create_post' %}">Create Post</a></li>
+                    <li><a href="{% url 'main:create_project' %}">Post Project</a></li>
                 </ul>
             </div>
             <div>

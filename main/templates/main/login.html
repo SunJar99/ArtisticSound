@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ post.title }} - ArtisticSound</title>
+    <title>Login - ArtisticSound</title>
     <style>
         * {
             margin: 0;
@@ -41,6 +41,7 @@
         .header-links {
             display: flex;
             gap: 20px;
+            align-items: center;
         }
         
         .header a {
@@ -57,123 +58,107 @@
         .main-content {
             flex: 1;
             padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .back-link {
-            color: white;
-            text-decoration: none;
-            margin-bottom: 20px;
-            display: inline-block;
-            transition: opacity 0.3s;
-        }
-        
-        .back-link:hover {
-            opacity: 0.8;
-        }
-        
-        .post-container {
             background: white;
-            border-radius: 10px;
+            border-radius: 15px;
             padding: 40px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
         }
         
-        .post-title {
-            font-size: 2.5em;
+        h1 {
+            text-align: center;
             color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .form-group {
             margin-bottom: 20px;
-            font-weight: bold;
         }
         
-        .post-meta {
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            color: #666;
-        }
-        
-        .post-author {
-            color: #764ba2;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        
-        .post-date {
-            color: #999;
-            margin-left: 15px;
-        }
-        
-        .post-content {
-            font-size: 1.1em;
-            line-height: 1.8;
-            color: #555;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            margin-bottom: 30px;
-        }
-        
-        .video-section {
-            margin: 30px 0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .post-tags {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .post-tags strong {
-            color: #333;
-            margin-right: 15px;
-        }
-        
-        .tag-link {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            text-decoration: none;
-            margin-right: 10px;
+        label {
+            display: block;
             margin-bottom: 8px;
-            transition: background 0.3s;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #c33;
+        }
+        
+        .errorlist li {
+            color: #c33;
+            margin-bottom: 8px;
             font-size: 0.9em;
         }
         
-        .tag-link:hover {
-            background: #764ba2;
-        }
-        
-        .action-buttons {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #f0f0f0;
+        .signup-link {
             text-align: center;
+            margin-top: 20px;
+            color: #666;
         }
         
-        .action-buttons a {
-            color: white;
+        .signup-link a {
+            color: #667eea;
             text-decoration: none;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 5px;
-            margin: 0 10px;
-            display: inline-block;
-            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
         }
         
-        .action-buttons a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .helptext {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            display: block;
         }
         
         /* Footer Styles */
@@ -244,49 +229,48 @@
         </div>
     </div>
     <div class="main-content">
-    <div class="container">
-        <a href="{% url 'main:post_list' %}" class="back-link">← Back to Posts</a>
-        
-        <div class="post-container">
-            <h1 class="post-title">{{ post.title }}</h1>
+        <div class="container">
+            <h1>🔐 Login</h1>
             
-            <div class="post-meta">
-                <span class="post-author">✍️ {{ post.author.username }}</span>
-                <span class="post-date">📅 {{ post.created_at|date:"F j, Y \a\t g:i A" }}</span>
-            </div>
+            {% if form.non_field_errors %}
+                <div class="error-message">
+                    Invalid username or password. Please try again.
+                </div>
+            {% endif %}
             
-            {% if post.youtube_url %}
-                <div class="video-section">
-                    {% if post.get_youtube_video_id %}
-                        <iframe width="100%" height="500" 
-                            src="https://www.youtube.com/embed/{{ post.get_youtube_video_id }}" 
-                            title="YouTube video player" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen>
-                        </iframe>
-                    {% else %}
-                        <p style="padding: 20px; color: #c33;">Invalid YouTube URL</p>
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="errorlist">
+                            {% for error in form.username.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </div>
                     {% endif %}
                 </div>
-            {% endif %}
-            
-            <div class="post-content">{{ post.description }}</div>
-            
-            {% if post.tags %}
-                <div class="post-tags">
-                    <strong>Tags:</strong>
-                    {% for tag in post.get_tags_list %}
-                        <a href="{% url 'main:post_list' %}?q={{ tag }}" class="tag-link">#{{ tag }}</a>
-                    {% endfor %}
+                
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="errorlist">
+                            {% for error in form.password.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-            {% endif %}
+                
+                <button type="submit">Login</button>
+            </form>
             
-            <div class="action-buttons">
-                <a href="{% url 'main:post_list' %}">Back to Posts</a>
-                <a href="/admin/">Admin Panel</a>
+            <div class="signup-link">
+                Don't have an account? <a href="{% url 'main:register' %}">Create one here</a>
             </div>
-        </div>
         </div>
     </div>
     
