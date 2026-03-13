@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Post, Project
+from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -73,5 +73,57 @@ class ProjectForm(forms.ModelForm):
             'tags': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'design, urgent, flexible (comma-separated)'
+            }),
+        }
+
+
+class JoinRequestForm(forms.ModelForm):
+    class Meta:
+        model = JoinRequest
+        fields = ('message',)
+        widgets = {
+            'message': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Tell the project creator why you want to join this project',
+                'rows': 4
+            }),
+        }
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ('content',)
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Type your message here...',
+                'rows': 3
+            }),
+        }
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('content',)
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Write a comment...',
+                'rows': 3
+            }),
+        }
+
+
+class DirectMessageForm(forms.ModelForm):
+    class Meta:
+        model = DirectMessage
+        fields = ('content',)
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Type your message...',
+                'rows': 4
             }),
         }

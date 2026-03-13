@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ArtisticSound</title>
+    <title>Join {{ project.title }} - ArtisticSound</title>
     <style>
         * {
             margin: 0;
@@ -55,13 +55,6 @@
             opacity: 0.8;
         }
         
-        .header-links {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
         .notification-badge {
             background: #ff4444;
             color: white;
@@ -73,41 +66,38 @@
             justify-content: center;
             font-size: 0.8em;
             font-weight: bold;
-            position: absolute;
-            top: -8px;
-            right: -8px;
-        }
-        
-        .header a {
-            position: relative;
         }
         
         .main-content {
             flex: 1;
             padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .container {
+            max-width: 600px;
+            margin: 0 auto;
             background: white;
             border-radius: 15px;
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
-            width: 100%;
         }
         
         h1 {
-            text-align: center;
             color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        
+        .project-info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
             margin-bottom: 30px;
-            font-size: 2em;
+            color: #666;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         label {
@@ -117,7 +107,7 @@
             font-weight: 500;
         }
         
-        input, textarea {
+        textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -126,11 +116,20 @@
             font-size: 1em;
             transition: border-color 0.3s;
             box-sizing: border-box;
+            resize: vertical;
+            min-height: 150px;
         }
         
-        input:focus, textarea:focus {
+        textarea:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        .helptext {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            display: block;
         }
         
         button {
@@ -143,52 +142,26 @@
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
         
         button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
         
-        .error-message {
-            background: #fee;
-            color: #c33;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            border-left: 4px solid #c33;
-        }
-        
-        .errorlist li {
-            color: #c33;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-        }
-        
-        .signup-link {
-            text-align: center;
+        .back-link {
+            display: inline-block;
             margin-top: 20px;
-            color: #666;
-        }
-        
-        .signup-link a {
             color: #667eea;
             text-decoration: none;
             font-weight: bold;
         }
         
-        .signup-link a:hover {
+        .back-link:hover {
             text-decoration: underline;
         }
         
-        .helptext {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
-            display: block;
-        }
-        
-        /* Footer Styles */
         .footer-section {
             background: rgba(0, 0, 0, 0.4);
             color: white;
@@ -248,24 +221,12 @@
                 <a href="{% url 'main:post_list' %}">Browse Posts</a>
                 <a href="{% url 'main:project_list' %}">Find Projects</a>
                 <span style="color: white;">Welcome, {{ user.username }}!</span>
-                <a href="{% url 'main:inbox' %}" style="position: relative;">
-                    💬 Inbox
-                    {% if total_unread %}
-                        <span class="notification-badge">{{ total_unread }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'main:my_join_requests' %}" style="position: relative;">
-                    My Requests
-                    {% if unread_count_applicant %}
-                        <span class="notification-badge">{{ unread_count_applicant }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'main:join_requests' %}" style="position: relative;">
-                    Incoming
-                    {% if unread_count_creator %}
-                        <span class="notification-badge">{{ unread_count_creator }}</span>
-                    {% endif %}
-                </a>
+                {% if unread_count %}
+                    <a href="{% url 'main:join_requests' %}" style="position: relative;">
+                        Join Requests
+                        <span class="notification-badge">{{ unread_count }}</span>
+                    </a>
+                {% endif %}
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>
@@ -273,49 +234,30 @@
             {% endif %}
         </div>
     </div>
+    
     <div class="main-content">
         <div class="container">
-            <h1>🔐 Login</h1>
-            
-            {% if form.non_field_errors %}
-                <div class="error-message">
-                    Invalid username or password. Please try again.
-                </div>
-            {% endif %}
+            <h1>Request to Join</h1>
+            <div class="project-info">
+                <strong>Project:</strong> {{ project.title }}<br>
+                <strong>Category:</strong> {{ project.get_category_display }}<br>
+                <strong>Budget:</strong> {{ project.budget }}<br>
+                <strong>Timeline:</strong> {{ project.timeline }}
+            </div>
             
             <form method="POST">
                 {% csrf_token %}
                 
                 <div class="form-group">
-                    <label for="{{ form.username.id_for_label }}">Username</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="errorlist">
-                            {% for error in form.username.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <label for="{{ form.message.id_for_label }}">Message to Project Creator</label>
+                    {{ form.message }}
+                    <span class="helptext">Tell the project creator why you are interested in joining this project</span>
                 </div>
                 
-                <div class="form-group">
-                    <label for="{{ form.password.id_for_label }}">Password</label>
-                    {{ form.password }}
-                    {% if form.password.errors %}
-                        <div class="errorlist">
-                            {% for error in form.password.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <button type="submit">Login</button>
+                <button type="submit">Send Request</button>
             </form>
             
-            <div class="signup-link">
-                Don't have an account? <a href="{% url 'main:register' %}">Create one here</a>
-            </div>
+            <a href="{% url 'main:project_detail' project.pk %}" class="back-link">← Back to Project</a>
         </div>
     </div>
     
@@ -331,7 +273,7 @@
                     <li><a href="{% url 'main:home' %}">Home</a></li>
                     <li><a href="{% url 'main:post_list' %}">Browse Posts</a></li>
                     <li><a href="{% url 'main:project_list' %}">Find Projects</a></li>
-                    <li><a href="{% url 'main:create_post' %}">Create Post</a></li>
+                    <li><a href="{% url 'main:create_project' %}">Post Project</a></li>
                 </ul>
             </div>
             <div>

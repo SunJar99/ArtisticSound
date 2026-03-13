@@ -54,6 +54,33 @@
             opacity: 0.8;
         }
         
+        .header-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .notification-badge {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+        }
+        
+        .header a {
+            position: relative;
+        }
+        
         .main-content {
             flex: 1;
             padding: 20px;
@@ -409,6 +436,24 @@
                 <a href="{% url 'main:post_list' %}">Browse Posts</a>
                 <a href="{% url 'main:project_list' %}">Find Projects</a>
                 <span style="color: white;">Welcome, {{ user.username }}!</span>
+                <a href="{% url 'main:inbox' %}" style="position: relative;">
+                    💬 Inbox
+                    {% if total_unread %}
+                        <span class="notification-badge">{{ total_unread }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:my_join_requests' %}" style="position: relative;">
+                    My Requests
+                    {% if unread_count_applicant %}
+                        <span class="notification-badge">{{ unread_count_applicant }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:join_requests' %}" style="position: relative;">
+                    Incoming
+                    {% if unread_count_creator %}
+                        <span class="notification-badge">{{ unread_count_creator }}</span>
+                    {% endif %}
+                </a>
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>

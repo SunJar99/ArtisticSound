@@ -15,4 +15,11 @@ urlpatterns = [
     path('project/<int:pk>/', views.project_detail, name='project_detail'),
     path('create-project/', views.create_project, name='create_project'),
     path('jobs/', views.jobs, name='jobs'),
+    path('project/<int:pk>/join/', views.request_to_join, name='request_join'),
+    path('join-requests/', views.join_requests, name='join_requests'),
+    path('my-requests/', views.my_join_requests, name='my_join_requests'),
+    path('chat/<int:request_id>/', views.chat_view, name='chat'),
+    path('approve/<int:request_id>/', views.approve_request, name='approve_request'),
+    path('reject/<int:request_id>/', views.reject_request, name='reject_request'),
+    path('inbox/', views.inbox, name='inbox'),
 ]

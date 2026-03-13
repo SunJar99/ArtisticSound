@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Requests - ArtisticSound</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .header-logo {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: opacity 0.3s;
+        }
+        
+        .header a:hover {
+            opacity: 0.8;
+        }
+        
+        .notification-badge {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .request-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .applicant-info h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        
+        .applicant-info p {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .status-approved {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+        
+        .status-rejected {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        
+        .project-name {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+        
+        .request-message {
+            background: #f9f9f9;
+            padding: 15px;
+            border-left: 3px solid #667eea;
+            border-radius: 4px;
+            margin: 15px 0;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .request-date {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-chat {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-chat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: 60px 30px;
+            text-align: center;
+        }
+        
+        .empty-state h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            color: #666;
+        }
+        
+        .footer-section {
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 40px 30px;
+            margin-top: 60px;
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'main:home' %}" class="header-logo">🎵 ArtisticSound</a>
+        <div class="header-links">
+            {% if user.is_authenticated %}
+                <a href="{% url 'main:post_list' %}">Browse Posts</a>
+                <a href="{% url 'main:project_list' %}">Find Projects</a>
+                <span style="color: white;">Welcome, {{ user.username }}!</span>
+                <a href="{% url 'main:inbox' %}" style="position: relative;">
+                    💬 Inbox
+                    {% if total_unread %}
+                        <span class="notification-badge">{{ total_unread }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:my_join_requests' %}" style="position: relative;">
+                    My Requests
+                    {% if unread_count_applicant %}
+                        <span class="notification-badge">{{ unread_count_applicant }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:join_requests' %}" style="position: relative;">
+                    Incoming
+                    {% if unread_count_creator %}
+                        <span class="notification-badge">{{ unread_count_creator }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:logout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'main:register' %}">Create Account</a>
+                <a href="{% url 'main:login' %}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="container">
+            <h1>📋 Join Requests for Your Projects</h1>
+            
+            {% if pending_requests %}
+                {% for request in pending_requests %}
+                    <div class="request-card">
+                        <div class="request-header">
+                            <div class="applicant-info">
+                                <h3>👤 {{ request.user.username }}</h3>
+                                <p>Applied to: <strong>{{ request.project.title }}</strong></p>
+                            </div>
+                            <span class="status-badge status-{{ request.status }}">{{ request.get_status_display }}</span>
+                        </div>
+                        
+                        <div class="project-name">📌 Project: {{ request.project.title }}</div>
+                        <div class="request-date">Applied on: {{ request.created_at|date:"M d, Y \a\t g:i A" }}</div>
+                        
+                        {% if request.message %}
+                            <div class="request-message">
+                                <strong>Message:</strong><br>{{ request.message }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="action-buttons">
+                            <a href="{% url 'main:chat' request.pk %}" class="btn btn-chat">💬 Chat & Review</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h2>No Join Requests</h2>
+                    <p>You don't have any pending join requests at the moment. When someone applies to join your project, they will appear here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <footer class="footer-section">
+        <div style="max-width: 1100px; margin: 0 auto;">
+            <p>&copy; 2026 ArtisticSound. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
