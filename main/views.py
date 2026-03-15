@@ -3,9 +3,10 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 from django.db.models import Q
-from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage, UserProfile
-from .forms import CustomUserCreationForm, PostForm, ProjectForm, JoinRequestForm, MessageForm, CommentForm, DirectMessageForm
+from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage, UserProfile, ChatRequest
+from .forms import CustomUserCreationForm, PostForm, ProjectForm, JoinRequestForm, MessageForm, CommentForm, DirectMessageForm, ChatRequestForm
 
 def home(request):
     return render(request, 'main/home.html')
@@ -41,7 +42,24 @@ def post_list(request):
 
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    return render(request, 'main/post_detail.html', {'post': post})
+    comments = post.comments.all()
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            return redirect('main:post_detail', pk=post.pk)
+    else:
+        form = CommentForm()
+    
+    return render(request, 'main/post_detail.html', {
+        'post': post,
+        'comments': comments,
+        'form': form
+    })
 
 def create_post(request):
     if not request.user.is_authenticated:
@@ -316,3 +334,222 @@ def inbox(request):
     return render(request, 'main/inbox.html', {
         'conversations': conversations
     })
+
+
+@login_required(login_url='main:login')
+def add_comment(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            return redirect('main:post_detail', pk=post.pk)
+    
+    return redirect('main:post_detail', pk=post.pk)
+
+
+@login_required(login_url='main:login')
+def send_direct_message(request, username):
+    recipient = get_object_or_404(User, username=username)
+    
+    # Prevent messaging yourself
+    if request.user == recipient:
+        return render(request, 'main/error.html', {
+            'error': 'You cannot message yourself.'
+        })
+    
+    # Check if recipient allows messages
+    try:
+        profile = recipient.userprofile
+        if not profile.allow_post_messages:
+            return render(request, 'main/error.html', {
+                'error': f'{username} is not accepting direct messages at the moment.'
+            })
+    except UserProfile.DoesNotExist:
+        # Create profile if it doesn't exist
+        UserProfile.objects.create(user=recipient)
+    
+    post_id = request.GET.get('post_id')
+    post = None
+    if post_id:
+        post = get_object_or_404(Post, pk=post_id)
+    
+    if request.method == 'POST':
+        form = DirectMessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.recipient = recipient
+            message.post = post
+            message.save()
+            return redirect('main:message_thread', username=username)
+    else:
+        form = DirectMessageForm()
+    
+    return render(request, 'main/send_message.html', {
+        'form': form,
+        'recipient': recipient,
+        'post': post
+    })
+
+
+@login_required(login_url='main:login')
+def messages_inbox(request):
+    # Get all direct messages for user (both sent and received)
+    received_messages = DirectMessage.objects.filter(recipient=request.user).order_by('-created_at')
+    sent_messages = DirectMessage.objects.filter(sender=request.user).order_by('-created_at')
+    
+    # Group conversations
+    conversations = {}
+    
+    for msg in received_messages:
+        key = msg.sender.username
+        if key not in conversations:
+            conversations[key] = {
+                'user': msg.sender,
+                'last_message': msg,
+                'unread_count': 0,
+                'messages': []
+            }
+        conversations[key]['unread_count'] += 1 if not msg.is_read else 0
+        conversations[key]['messages'].append(msg)
+    
+    for msg in sent_messages:
+        key = msg.recipient.username
+        if key not in conversations:
+            conversations[key] = {
+                'user': msg.recipient,
+                'last_message': msg,
+                'unread_count': 0,
+                'messages': []
+            }
+        conversations[key]['messages'].append(msg)
+    
+    # Mark messages as read
+    DirectMessage.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    
+    return render(request, 'main/messages_inbox.html', {
+        'conversations': conversations
+    })
+
+
+@login_required(login_url='main:login')
+def message_thread(request, username):
+    user = get_object_or_404(User, username=username)
+    
+    # Get conversation between request.user and user
+    messages = DirectMessage.objects.filter(
+        Q(sender=request.user, recipient=user) |
+        Q(sender=user, recipient=request.user)
+    ).order_by('created_at')
+    
+    # Mark messages as read
+    DirectMessage.objects.filter(sender=user, recipient=request.user, is_read=False).update(is_read=True)
+    
+    if request.method == 'POST':
+        form = DirectMessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.recipient = user
+            message.save()
+            return redirect('main:message_thread', username=username)
+    else:
+        form = DirectMessageForm()
+    
+    return render(request, 'main/message_thread.html', {
+        'user': user,
+        'messages': messages,
+        'form': form
+    })
+
+
+@login_required(login_url='main:login')
+def settings_page(request):
+    try:
+        profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+    
+    if request.method == 'POST':
+        allow_messages = request.POST.get('allow_post_messages') == 'on'
+        profile.allow_post_messages = allow_messages
+        profile.save()
+        return redirect('main:settings')
+    
+    return render(request, 'main/settings.html', {
+        'profile': profile
+    })
+
+
+@login_required(login_url='main:login')
+def request_to_chat(request, post_id):
+    """Send a chat request to post creator"""
+    post = get_object_or_404(Post, pk=post_id)
+    recipient = post.author
+    
+    # Prevent messaging yourself
+    if request.user == recipient:
+        return render(request, 'main/error.html', {
+            'error': 'You cannot request to chat with yourself.'
+        })
+    
+    # Check if already requested
+    existing = ChatRequest.objects.filter(sender=request.user, recipient=recipient, post=post, status='pending').first()
+    if existing:
+        return render(request, 'main/error.html', {
+            'error': 'You already have a pending chat request with this user for this post.'
+        })
+    
+    if request.method == 'POST':
+        form = ChatRequestForm(request.POST)
+        if form.is_valid():
+            chat_req = form.save(commit=False)
+            chat_req.sender = request.user
+            chat_req.recipient = recipient
+            chat_req.post = post
+            chat_req.save()
+            return render(request, 'main/success.html', {
+                'title': 'Chat Request Sent',
+                'message': f'Your chat request has been sent to {recipient.username}!'
+            })
+    else:
+        form = ChatRequestForm()
+    
+    return render(request, 'main/request_to_chat.html', {
+        'form': form,
+        'post': post,
+        'recipient': recipient
+    })
+
+
+@login_required(login_url='main:login')
+def chat_requests_inbox(request):
+    """View incoming chat requests"""
+    chat_requests = ChatRequest.objects.filter(recipient=request.user, status='pending').order_by('-created_at')
+    
+    return render(request, 'main/chat_requests_inbox.html', {
+        'chat_requests': chat_requests
+    })
+
+
+@login_required(login_url='main:login')
+def approve_chat_request(request, chat_request_id):
+    """Approve a chat request"""
+    chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
+    chat_req.status = 'approved'
+    chat_req.save()
+    return redirect('main:chat_requests_inbox')
+
+
+@login_required(login_url='main:login')
+def reject_chat_request(request, chat_request_id):
+    """Reject a chat request"""
+    chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
+    chat_req.status = 'rejected'
+    chat_req.save()
+    return redirect('main:chat_requests_inbox')

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - ArtisticSound</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .header-logo {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: opacity 0.3s;
+        }
+        
+        .header a:hover {
+            opacity: 0.8;
+        }
+
+        .notification-badge {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+        }
+
+        .header a {
+            position: relative;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 60px 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .success-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #4caf50;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'main:home' %}" class="header-logo">🎵 ArtisticSound</a>
+        <div class="header-links">
+            {% if user.is_authenticated %}
+                <a href="{% url 'main:post_list' %}">Browse Posts</a>
+                <a href="{% url 'main:project_list' %}">Find Projects</a>
+                <span style="color: white;">Welcome, {{ user.username }}!</span>
+                <a href="{% url 'main:inbox' %}" style="position: relative;">
+                    💬 Inbox
+                    {% if total_unread %}
+                        <span class="notification-badge">{{ total_unread }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:logout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'main:register' %}">Create Account</a>
+                <a href="{% url 'main:login' %}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="success-icon">✓</div>
+            <h1>{{ title }}</h1>
+            <p>{{ message }}</p>
+            <a href="{% url 'main:post_list' %}" class="btn">Back to Posts</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage
+from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage, ChatRequest
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -124,6 +124,19 @@ class DirectMessageForm(forms.ModelForm):
             'content': forms.Textarea(attrs={
                 'class': 'form-control',
                 'placeholder': 'Type your message...',
+                'rows': 4
+            }),
+        }
+
+
+class ChatRequestForm(forms.ModelForm):
+    class Meta:
+        model = ChatRequest
+        fields = ('message',)
+        widgets = {
+            'message': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Tell the creator why you want to chat (optional)',
                 'rows': 4
             }),
         }

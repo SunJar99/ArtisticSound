@@ -25,6 +25,7 @@ class Post(models.Model):
             return None
         
         try:
+            import re
             # Strip whitespace from URL
             url = str(self.youtube_url).strip()
             
@@ -33,40 +34,15 @@ class Post(models.Model):
             
             video_id = None
             
-            # Handle youtu.be short URLs first (most common)
-            if 'youtu.be/' in url:
-                # Format: https://youtu.be/VIDEO_ID or https://youtu.be/VIDEO_ID?t=10
-                video_id = url.split('youtu.be/')[1]
-                # Remove query parameters
-                if '?' in video_id:
-                    video_id = video_id.split('?')[0]
-                if '&' in video_id:
-                    video_id = video_id.split('&')[0]
-            
-            # Handle youtube.com/watch URLs
-            elif 'youtube.com/watch' in url:
-                # Format: https://www.youtube.com/watch?v=VIDEO_ID or with &t=10
-                if 'v=' in url:
-                    video_id = url.split('v=')[1]
-                    # Remove additional parameters
-                    if '&' in video_id:
-                        video_id = video_id.split('&')[0]
-            
-            # Handle youtube.com/embed URLs
-            elif 'youtube.com/embed/' in url:
-                # Format: https://www.youtube.com/embed/VIDEO_ID
-                video_id = url.split('embed/')[1]
-                # Remove query parameters
-                if '?' in video_id:
-                    video_id = video_id.split('?')[0]
-            
-            # Validate and return video_id
-            if video_id:
-                video_id = video_id.strip()
-                # YouTube video IDs are typically 10-11 characters of alphanumeric, dash, underscore
-                # Be lenient with length to handle edge cases
-                if (9 <= len(video_id) <= 12) and all(c.isalnum() or c in '-_' for c in video_id):
-                    return video_id
+            # Try to find 11-character video ID using regex first (catches all formats)
+            # YouTube video IDs are exactly 11 chars: alphanumeric, dash, underscore
+            match = re.search(r'([a-zA-Z0-9_-]{11})', url)
+            if match:
+                candidate = match.group(1)
+                # Additional validation to avoid matching random 11-char strings
+                # YouTube IDs typically have mixed case or common patterns
+                if all(c.isalnum() or c in '-_' for c in candidate):
+                    return candidate
             
             return None
             
@@ -181,3 +157,26 @@ class DirectMessage(models.Model):
     
     def __str__(self):
         return f"Message from {self.sender.username} to {self.recipient.username}"
+
+
+class ChatRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_requests_sent')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_requests_received')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='chat_requests')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    message = models.TextField(blank=True, default='', help_text="Optional message with chat request")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('sender', 'recipient', 'post')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Chat request from {self.sender.username} to {self.recipient.username} on {self.post.title}"

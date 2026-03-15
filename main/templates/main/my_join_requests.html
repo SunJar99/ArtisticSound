@@ -239,6 +239,8 @@
                         <span class="notification-badge">{{ total_unread }}</span>
                     {% endif %}
                 </a>
+                <a href="{% url 'main:messages_inbox' %}">✉️ Messages</a>
+                <a href="{% url 'main:settings' %}">⚙️ Settings</a>
                 <a href="{% url 'main:my_join_requests' %}" style="position: relative;">
                     My Requests
                     {% if unread_count_applicant %}
@@ -251,6 +253,7 @@
                         <span class="notification-badge">{{ unread_count_creator }}</span>
                     {% endif %}
                 </a>
+                <a href="{% url 'main:chat_requests_inbox' %}">💬 Chat Requests</a>
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>

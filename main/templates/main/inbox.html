@@ -263,6 +263,7 @@
                         <span class="notification-badge">{{ unread_count_creator }}</span>
                     {% endif %}
                 </a>
+                <a href="{% url 'main:chat_requests_inbox' %}">💬 Chat Requests</a>
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>

@@ -22,4 +22,13 @@ urlpatterns = [
     path('approve/<int:request_id>/', views.approve_request, name='approve_request'),
     path('reject/<int:request_id>/', views.reject_request, name='reject_request'),
     path('inbox/', views.inbox, name='inbox'),
+    path('post/<int:pk>/comment/', views.add_comment, name='add_comment'),
+    path('message/<str:username>/', views.send_direct_message, name='send_message'),
+    path('messages/', views.messages_inbox, name='messages_inbox'),
+    path('message-thread/<str:username>/', views.message_thread, name='message_thread'),
+    path('settings/', views.settings_page, name='settings'),
+    path('post/<int:post_id>/request-chat/', views.request_to_chat, name='request_chat'),
+    path('chat-requests/', views.chat_requests_inbox, name='chat_requests_inbox'),
+    path('chat-request/<int:chat_request_id>/approve/', views.approve_chat_request, name='approve_chat_request'),
+    path('chat-request/<int:chat_request_id>/reject/', views.reject_chat_request, name='reject_chat_request'),
 ]
