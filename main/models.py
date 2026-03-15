@@ -168,15 +168,16 @@ class ChatRequest(models.Model):
     
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_requests_sent')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_requests_received')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='chat_requests')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='chat_requests', null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='chat_requests', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     message = models.TextField(blank=True, default='', help_text="Optional message with chat request")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ('sender', 'recipient', 'post')
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"Chat request from {self.sender.username} to {self.recipient.username} on {self.post.title}"
+        context = self.post.title if self.post else self.project.title
+        return f"Chat request from {self.sender.username} to {self.recipient.username} on {context}"

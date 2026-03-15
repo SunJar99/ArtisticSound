@@ -279,6 +279,12 @@
             transform: translateY(-3px);
         }
         
+        .message-btn {
+            background: #764ba2 !important;
+            padding: 10px 15px !important;
+            border-radius: 5px !important;
+        }
+        
         .btn.secondary {
             background: white;
             color: #667eea;
@@ -344,26 +350,13 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'main:post_list' %}">Browse Posts</a>
                 <a href="{% url 'main:project_list' %}">Find Projects</a>
-                <span style="color: white;">Welcome, {{ user.username }}!</span>
-                <a href="{% url 'main:inbox' %}" style="position: relative;">
-                    💬 Inbox
-                    {% if total_unread %}
-                        <span class="notification-badge">{{ total_unread }}</span>
+                <a href="{% url 'main:unified_chat' %}" style="position: relative;">
+                    💬 Chat
+                    {% if unread_total %}
+                        <span class="notification-badge">{{ unread_total }}</span>
                     {% endif %}
                 </a>
-                <a href="{% url 'main:my_join_requests' %}" style="position: relative;">
-                    My Requests
-                    {% if unread_count_applicant %}
-                        <span class="notification-badge">{{ unread_count_applicant }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'main:join_requests' %}" style="position: relative;">
-                    Incoming
-                    {% if unread_count_creator %}
-                        <span class="notification-badge">{{ unread_count_creator }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'main:chat_requests_inbox' %}">💬 Chat Requests</a>
+                <a href="{% url 'main:settings' %}">⚙️ Settings</a>
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>
@@ -433,13 +426,11 @@
                 
                 <div class="action-buttons">
                     {% if user.is_authenticated %}
-                        {% if user == project.author %}
-                            <a href="{% url 'main:join_requests' %}" class="btn">View Join Requests</a>
-                        {% else %}
-                            <a href="{% url 'main:request_join' project.pk %}" class="btn">Request to Join</a>
+                        {% if user != project.author %}
+                            <a href="{% url 'main:request_chat_project' project.pk %}" class="message-btn">💬 Request to Chat</a>
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'main:login' %}" class="btn">Login to Apply</a>
+                        <a href="{% url 'main:login' %}" class="btn">Login to Chat</a>
                     {% endif %}
                     <a href="{% url 'main:project_list' %}" class="btn secondary">View All Projects</a>
                 </div>
@@ -487,3 +478,8 @@
     </footer>
 </body>
 </html>
+
+
+
+
+

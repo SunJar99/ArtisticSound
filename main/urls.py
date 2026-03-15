@@ -28,7 +28,9 @@ urlpatterns = [
     path('message-thread/<str:username>/', views.message_thread, name='message_thread'),
     path('settings/', views.settings_page, name='settings'),
     path('post/<int:post_id>/request-chat/', views.request_to_chat, name='request_chat'),
+    path('project/<int:project_id>/request-chat/', views.request_to_chat_project, name='request_chat_project'),
     path('chat-requests/', views.chat_requests_inbox, name='chat_requests_inbox'),
     path('chat-request/<int:chat_request_id>/approve/', views.approve_chat_request, name='approve_chat_request'),
     path('chat-request/<int:chat_request_id>/reject/', views.reject_chat_request, name='reject_chat_request'),
+    path('chat/', views.unified_chat, name='unified_chat'),
 ]

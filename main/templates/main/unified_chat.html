@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - ArtisticSound</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .header-logo {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: opacity 0.3s;
+            position: relative;
+        }
+        
+        .header a:hover {
+            opacity: 0.8;
+        }
+        
+        .notification-badge {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 30px 20px;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: #f8f8ff;
+        }
+        
+        .tab-btn:hover {
+            background: #f8f8ff;
+        }
+        
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .conversation-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .conversation-item:hover {
+            background: #f8f8f8;
+        }
+        
+        .conversation-item.active {
+            background: #f0f0ff;
+            border-left: 4px solid #667eea;
+        }
+        
+        .conversation-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .conversation-user {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .conversation-preview {
+            color: #999;
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .badge {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8em;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .chat-header h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.3em;
+        }
+        
+        .chat-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            max-height: 500px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.own {
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+        
+        .message.own .message-content {
+            background: #667eea;
+            color: white;
+        }
+        
+        .message.other .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .message-sender {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .message-time {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .message.own .message-time {
+            text-align: right;
+        }
+        
+        .form-section {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: white;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state-text {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .chat-request {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .chat-request-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .chat-request-message {
+            color: #666;
+            margin-bottom: 12px;
+            font-size: 0.95em;
+        }
+        
+        .chat-request-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s;
+        }
+        
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                max-height: 200px;
+            }
+            
+            .chat-area {
+                max-width: 100%;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'main:home' %}" class="header-logo">🎵 ArtisticSound</a>
+        <div class="header-links">
+            {% if user.is_authenticated %}
+                <a href="{% url 'main:post_list' %}">Browse Posts</a>
+                <a href="{% url 'main:project_list' %}">Find Projects</a>
+                <a href="{% url 'main:unified_chat' %}" style="position: relative;">
+                    💬 Chat
+                    {% if unread_total %}
+                        <span class="notification-badge">{{ unread_total }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'main:settings' %}">⚙️ Settings</a>
+                <a href="{% url 'main:logout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'main:register' %}">Create Account</a>
+                <a href="{% url 'main:login' %}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="main-content" data-current-user-id="{{ user.id }}" data-message-url="/message/">
+        <script id="messages-data" type="application/json">
+        {
+            {% for username, conv in conversations.items %}"{{ username }}": {{ conv.messages_json|safe }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        }
+        </script>
+        <div class="container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="messages" onclick="switchTab(event, 'messages')">💬 Messages</button>
+                    <button class="tab-btn" data-tab="requests" onclick="switchTab(event, 'requests')">🤝 Requests</button>
+                </div>
+                
+                <!-- Messages Tab -->
+                <div id="messages" class="tab-content active">
+                    <div class="conversations-list">
+                        {% if conversations %}
+                            {% for username, conv in conversations.items %}
+                                <div class="conversation-item" onclick="selectConversation(this, '{{ username }}')" data-username="{{ username }}">
+                                    <div class="conversation-info">
+                                        <div class="conversation-user">{{ conv.user.username }}</div>
+                                        {% if conv.last_message %}
+                                            <div class="conversation-preview">
+                                                {{ conv.last_message.content|truncatewords:8 }}
+                                            </div>
+                                        {% else %}
+                                            <div class="conversation-preview">No messages yet</div>
+                                        {% endif %}
+                                    </div>
+                                    {% if conv.unread_count %}
+                                        <span class="badge">{{ conv.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-state-icon">💬</div>
+                                <div class="empty-state-text">No conversations yet</div>
+                                <p style="font-size: 0.9em;">Start by requesting to chat on a post</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Requests Tab -->
+                <div id="requests" class="tab-content">
+                    <div class="conversations-list">
+                        {% if chat_requests %}
+                            {% for request in chat_requests %}
+                                <div class="chat-request" style="margin: 10px;">
+                                    <div class="chat-request-header">From: {{ request.sender.username }}</div>
+                                    <div style="font-size: 0.85em; color: #666;">Post: {{ request.post.title }}</div>
+                                    {% if request.message %}
+                                        <div class="chat-request-message">{{ request.message }}</div>
+                                    {% endif %}
+                                    <div class="chat-request-actions">
+                                        <form method="POST" action="{% url 'main:approve_chat_request' request.id %}" style="flex: 1;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-small btn-approve">✓ Approve</button>
+                                        </form>
+                                        <form method="POST" action="{% url 'main:reject_chat_request' request.id %}" style="flex: 1;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-small btn-reject">✕ Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🤝</div>
+                                <div class="empty-state-text">No chat requests</div>
+                                <p style="font-size: 0.9em;">Requests will appear here</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div id="selected-conversation" style="display: none; height: 100%; display: flex; flex-direction: column;">
+                    <div class="chat-header">
+                        <h2 id="chat-user">Select a conversation</h2>
+                        <p>Click on a conversation to start chatting</p>
+                    </div>
+                    
+                    <div class="messages-container" id="messages-display">
+                        <!-- Messages will be loaded here via JavaScript -->
+                    </div>
+                    
+                    <form method="POST" id="send-message-form" class="form-section" onsubmit="return sendMessage(event);">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <textarea name="content" id="message-input" placeholder="Type your message..." required></textarea>
+                        </div>
+                        <button type="submit">Send Message</button>
+                    </form>
+                </div>
+                
+                <div id="no-selection" class="empty-state">
+                    <div class="empty-state-icon">💭</div>
+                    <div class="empty-state-text">Select a conversation to start chatting</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Store messages data globally
+        let messagesDB = {};
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const messagesData = JSON.parse(document.getElementById('messages-data').textContent);
+                messagesDB = messagesData;
+                console.log('Loaded messages for:', Object.keys(messagesDB).join(', '));
+            } catch (e) {
+                console.error('Failed to load messages data:', e);
+            }
+            
+            // Auto-select conversation if it was just messaged
+            const lastMessaged = sessionStorage.getItem('lastMessagedUser');
+            if (lastMessaged) {
+                sessionStorage.removeItem('lastMessagedUser');
+                const conversationItem = document.querySelector(`[data-username="${lastMessaged}"]`);
+                if (conversationItem) {
+                    setTimeout(() => {
+                        conversationItem.click();
+                        // Scroll to bottom of messages
+                        const messagesDisplay = document.getElementById('messages-display');
+                        if (messagesDisplay) {
+                            messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+                        }
+                    }, 100);
+                }
+            }
+        });
+        
+        function switchTab(event, tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab and mark button active
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function selectConversation(element, username) {
+            // Mark as active
+            document.querySelectorAll('.conversation-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Show chat area
+            document.getElementById('no-selection').style.display = 'none';
+            document.getElementById('selected-conversation').style.display = 'flex';
+            
+            // Update header
+            document.getElementById('chat-user').textContent = username;
+            
+            // Get messages from the global messages database
+            const messages = messagesDB[username] || [];
+            console.log('Selected conversation with', username, 'found', messages.length, 'messages');
+            
+            // Get current user ID
+            const currentUserId = parseInt(document.querySelector('.main-content')?.dataset.currentUserId || '0');
+            console.log('Current user ID:', currentUserId);
+            
+            // Render messages
+            const messagesDisplay = document.getElementById('messages-display');
+            if (messages.length === 0) {
+                messagesDisplay.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No messages yet. Start the conversation!</div>';
+            } else {
+                // Sort messages by date (oldest first)
+                messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                
+                let html = '';
+                for (const msg of messages) {
+                    const isOwn = msg.sender_id === currentUserId;
+                    const time = new Date(msg.created_at);
+                    const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    html += `
+                        <div class="message ${isOwn ? 'own' : 'other'}">
+                            <div>
+                                ${!isOwn ? `<div class="message-sender">${escapeHtml(msg.sender_username)}</div>` : ''}
+                                <div class="message-content">${escapeHtml(msg.content)}</div>
+                                <div class="message-time">${timeStr}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                messagesDisplay.innerHTML = html;
+                // Scroll to bottom to show latest messages
+                messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+                console.log('Messages rendered successfully');
+            }
+            
+            // Store current username for sending
+            document.getElementById('send-message-form').dataset.recipientUsername = username;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function sendMessage(event) {
+            event.preventDefault();
+            const content = document.getElementById('message-input').value;
+            const form = document.getElementById('send-message-form');
+            const recipientUsername = form.dataset.recipientUsername;
+            
+            if (!recipientUsername) {
+                alert('Please select a conversation first');
+                return false;
+            }
+            
+            if (!content.trim()) {
+                alert('Please enter a message');
+                return false;
+            }
+            
+            // Show sending state
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+            
+            // Build the URL: /message/{username}/
+            const baseUrl = document.querySelector('.main-content').dataset.messageUrl;
+            const url = baseUrl + encodeURIComponent(recipientUsername) + '/';
+            
+            // Send via AJAX
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: 'content=' + encodeURIComponent(content)
+            })
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Error sending message:', error);
+                button.textContent = originalText;
+                button.disabled = false;
+                alert('Error sending message');
+            })
+            .then(data => {
+                if (data && data.success) {
+                    // Clear the input field
+                    document.getElementById('message-input').value = '';
+                    
+                    // Add new message to display
+                    if (data.message) {
+                        const messagesDisplay = document.getElementById('messages-display');
+                        const currentUser = '{{ user.username }}';
+                        const isOwn = data.message.sender_username === currentUser;
+                        const time = new Date(data.message.created_at);
+                        const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
+                        messageDiv.innerHTML = `
+                            <div>
+                                ${!isOwn ? `<div class="message-sender">${escapeHtml(data.message.sender_username)}</div>` : ''}
+                                <div class="message-content">${escapeHtml(data.message.content)}</div>
+                                <div class="message-time">${timeStr}</div>
+                            </div>
+                        `;
+                        messagesDisplay.appendChild(messageDiv);
+                        
+                        // Scroll to bottom
+                        messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+                    }
+                    
+                    button.textContent = originalText;
+                    button.disabled = false;
+                } else {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    alert('Error: ' + (data?.error || 'Failed to send message'));
+                }
+            });
+            
+            return false;
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+

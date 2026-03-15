@@ -53,6 +53,7 @@
             display: flex;
             gap: 20px;
             align-items: center;
+            flex-wrap: wrap;
         }
         
         .main-content {
@@ -60,58 +61,40 @@
             padding: 30px 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
         }
         
         .container {
+            width: 100%;
+            max-width: 500px;
             background: white;
             border-radius: 15px;
-            padding: 40px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            max-width: 500px;
-            width: 100%;
+            padding: 30px;
         }
         
-        h1 {
-            text-align: center;
+        .container h2 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 1.8em;
+            margin-bottom: 20px;
         }
         
         .recipient-info {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #666;
-            font-size: 1.1em;
-        }
-        
-        .recipient-info strong {
-            color: #667eea;
-        }
-        
-        .post-info {
-            background: #f0f7ff;
-            border-left: 4px solid #667eea;
             padding: 15px;
-            border-radius: 5px;
+            background: #f0f0ff;
+            border-left: 4px solid #667eea;
             margin-bottom: 20px;
-            color: #555;
-        }
-        
-        .post-info strong {
-            color: #667eea;
+            border-radius: 5px;
+            color: #666;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         label {
             display: block;
             margin-bottom: 8px;
             color: #333;
-            font-weight: 500;
+            font-weight: bold;
         }
         
         textarea {
@@ -132,51 +115,38 @@
             border-color: #667eea;
         }
         
-        .button-group {
+        .buttons {
             display: flex;
             gap: 10px;
             margin-top: 20px;
         }
         
-        button, a.btn {
+        button {
             flex: 1;
             padding: 12px;
             border: none;
             border-radius: 8px;
-            font-size: 1em;
-            font-weight: bold;
             cursor: pointer;
+            font-weight: bold;
             transition: transform 0.3s;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
         }
         
-        button {
+        button[type="submit"] {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
         
-        button:hover {
+        button[type="submit"]:hover {
             transform: translateY(-2px);
         }
         
-        a.btn {
-            background: #f0f0f0;
+        .btn-cancel {
+            background: #e0e0e0;
             color: #333;
         }
         
-        a.btn:hover {
-            background: #e0e0e0;
-        }
-        
-        .error-message {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #c33;
+        .btn-cancel:hover {
+            background: #d0d0d0;
         }
     </style>
 </head>
@@ -186,6 +156,9 @@
         <div class="header-links">
             {% if user.is_authenticated %}
                 <a href="{% url 'main:post_list' %}">Browse Posts</a>
+                <a href="{% url 'main:project_list' %}">Find Projects</a>
+                <a href="{% url 'main:unified_chat' %}">💬 Chat</a>
+                <a href="{% url 'main:settings' %}">⚙️ Settings</a>
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>
@@ -196,42 +169,23 @@
     
     <div class="main-content">
         <div class="container">
-            <h1>💬 Send Message</h1>
-            <div class="recipient-info">
-                To: <strong>{{ recipient.username }}</strong>
-            </div>
+            <h2>Send Message</h2>
             
-            {% if post %}
-                <div class="post-info">
-                    📝 Regarding: <strong>{{ post.title }}</strong>
-                </div>
-            {% endif %}
+            <div class="recipient-info">
+                <strong>To:</strong> {{ recipient.username }}
+            </div>
             
             <form method="POST">
                 {% csrf_token %}
                 
-                {% if form.non_field_errors %}
-                    <div class="error-message">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-                
                 <div class="form-group">
-                    {{ form.as_p }}
-                    {% if form.content.errors %}
-                        <div class="error-message">
-                            {{ form.content.errors }}
-                        </div>
-                    {% endif %}
+                    <label>Message</label>
+                    {{ form.content }}
                 </div>
                 
-                <div class="button-group">
-                    <button type="submit">Send Message</button>
-                    {% if post %}
-                        <a href="{% url 'main:post_detail' post.id %}" class="btn">Back to Post</a>
-                    {% else %}
-                        <a href="{% url 'main:post_list' %}" class="btn">Back</a>
-                    {% endif %}
+                <div class="buttons">
+                    <button type="submit">Send</button>
+                    <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
                 </div>
             </form>
         </div>

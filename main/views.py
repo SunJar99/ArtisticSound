@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.http import JsonResponse
+import json
 from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage, UserProfile, ChatRequest
 from .forms import CustomUserCreationForm, PostForm, ProjectForm, JoinRequestForm, MessageForm, CommentForm, DirectMessageForm, ChatRequestForm
 
@@ -386,7 +388,23 @@ def send_direct_message(request, username):
             message.recipient = recipient
             message.post = post
             message.save()
-            return redirect('main:message_thread', username=username)
+            
+            # Return JSON for AJAX requests
+            return JsonResponse({
+                'success': True,
+                'message': {
+                    'id': message.id,
+                    'sender_username': message.sender.username,
+                    'content': message.content,
+                    'created_at': message.created_at.isoformat(),
+                    'is_read': message.is_read
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid message form'
+            })
     else:
         form = DirectMessageForm()
     
@@ -513,16 +531,51 @@ def request_to_chat(request, post_id):
             chat_req.recipient = recipient
             chat_req.post = post
             chat_req.save()
-            return render(request, 'main/success.html', {
-                'title': 'Chat Request Sent',
-                'message': f'Your chat request has been sent to {recipient.username}!'
-            })
+            return redirect('main:unified_chat')
     else:
         form = ChatRequestForm()
     
     return render(request, 'main/request_to_chat.html', {
         'form': form,
         'post': post,
+        'recipient': recipient
+    })
+
+
+@login_required(login_url='main:login')
+def request_to_chat_project(request, project_id):
+    """Send a chat request to project author"""
+    project = get_object_or_404(Project, pk=project_id)
+    recipient = project.author
+    
+    # Prevent messaging yourself
+    if request.user == recipient:
+        return render(request, 'main/error.html', {
+            'error': 'You cannot request to chat with yourself.'
+        })
+    
+    # Check if already requested
+    existing = ChatRequest.objects.filter(sender=request.user, recipient=recipient, project=project, status='pending').first()
+    if existing:
+        return render(request, 'main/error.html', {
+            'error': 'You already have a pending chat request with this user for this project.'
+        })
+    
+    if request.method == 'POST':
+        form = ChatRequestForm(request.POST)
+        if form.is_valid():
+            chat_req = form.save(commit=False)
+            chat_req.sender = request.user
+            chat_req.recipient = recipient
+            chat_req.project = project
+            chat_req.save()
+            return redirect('main:unified_chat')
+    else:
+        form = ChatRequestForm()
+    
+    return render(request, 'main/request_to_chat.html', {
+        'form': form,
+        'project': project,
         'recipient': recipient
     })
 
@@ -543,7 +596,7 @@ def approve_chat_request(request, chat_request_id):
     chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
     chat_req.status = 'approved'
     chat_req.save()
-    return redirect('main:chat_requests_inbox')
+    return redirect('main:unified_chat')
 
 
 @login_required(login_url='main:login')
@@ -552,4 +605,116 @@ def reject_chat_request(request, chat_request_id):
     chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
     chat_req.status = 'rejected'
     chat_req.save()
-    return redirect('main:chat_requests_inbox')
+    return redirect('main:unified_chat')
+
+
+@login_required(login_url='main:login')
+def unified_chat(request):
+    """Unified chat page with messages and chat requests"""
+    from django.core.serializers import serialize
+    import json
+    
+    # Handle chat request actions
+    if request.method == 'POST':
+        if 'approve_chat_request' in request.POST:
+            chat_request_id = request.POST.get('chat_request_id')
+            chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
+            chat_req.status = 'approved'
+            chat_req.save()
+            return redirect('main:unified_chat')
+        
+        if 'reject_chat_request' in request.POST:
+            chat_request_id = request.POST.get('chat_request_id')
+            chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
+            chat_req.status = 'rejected'
+            chat_req.save()
+            return redirect('main:unified_chat')
+    
+    # Get all direct messages for user (both sent and received)
+    received_messages = DirectMessage.objects.filter(recipient=request.user).order_by('-created_at')
+    sent_messages = DirectMessage.objects.filter(sender=request.user).order_by('-created_at')
+    
+    # Group conversations
+    conversations = {}
+    
+    for msg in received_messages:
+        key = msg.sender.username
+        if key not in conversations:
+            conversations[key] = {
+                'user': msg.sender,
+                'last_message': msg,
+                'unread_count': 0,
+                'messages': []
+            }
+        conversations[key]['unread_count'] += 1 if not msg.is_read else 0
+        conversations[key]['messages'].append(msg)
+    
+    for msg in sent_messages:
+        key = msg.recipient.username
+        if key not in conversations:
+            conversations[key] = {
+                'user': msg.recipient,
+                'last_message': msg,
+                'unread_count': 0,
+                'messages': []
+            }
+        conversations[key]['messages'].append(msg)
+    
+    # Add people from chat requests (both sent and received approved requests)
+    # Get chat requests sent by this user (people they requested to chat with)
+    sent_chat_requests = ChatRequest.objects.filter(sender=request.user, status='approved').order_by('-created_at')
+    for chat_req in sent_chat_requests:
+        key = chat_req.recipient.username
+        if key not in conversations:
+            conversations[key] = {
+                'user': chat_req.recipient,
+                'last_message': None,
+                'unread_count': 0,
+                'messages': []
+            }
+    
+    # Get chat requests received by this user that were approved
+    received_chat_requests = ChatRequest.objects.filter(recipient=request.user, status='approved').order_by('-created_at')
+    for chat_req in received_chat_requests:
+        key = chat_req.sender.username
+        if key not in conversations:
+            conversations[key] = {
+                'user': chat_req.sender,
+                'last_message': None,
+                'unread_count': 0,
+                'messages': []
+            }
+    
+    # Mark messages as read
+    DirectMessage.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    
+    # Serialize messages to JSON for each conversation
+    for key in conversations:
+        messages_list = []
+        for msg in conversations[key]['messages']:
+            messages_list.append({
+                'id': msg.id,
+                'sender_id': msg.sender.id,
+                'sender_username': msg.sender.username,
+                'recipient_id': msg.recipient.id,
+                'content': msg.content,
+                'created_at': msg.created_at.isoformat(),
+                'is_read': msg.is_read
+            })
+        conversations[key]['messages_json'] = json.dumps(messages_list)
+    
+    # Get pending chat requests (only for the Requests tab)
+    chat_requests = ChatRequest.objects.filter(recipient=request.user, status='pending').order_by('-created_at')
+    
+    # Get unread counts
+    unread_messages = sum(conv['unread_count'] for conv in conversations.values())
+    unread_chat_requests = chat_requests.count()
+    unread_total = unread_messages + unread_chat_requests
+    
+    return render(request, 'main/unified_chat.html', {
+        'conversations': conversations,
+        'chat_requests': chat_requests,
+        'unread_messages': unread_messages,
+        'unread_chat_requests': unread_chat_requests,
+        'unread_total': unread_total
+    })
