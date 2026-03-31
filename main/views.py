@@ -1,3 +1,10 @@
+"""
+ArtisticSound Views Module
+
+This module contains all view functions for the ArtisticSound application.
+Organized into logical sections for better readability and maintenance.
+"""
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import authenticate, login, logout
@@ -7,13 +14,28 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import JsonResponse
 import json
-from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage, UserProfile, ChatRequest
-from .forms import CustomUserCreationForm, PostForm, ProjectForm, JoinRequestForm, MessageForm, CommentForm, DirectMessageForm, ChatRequestForm
+
+from .models import (
+    Post, Project, JoinRequest, Message, Comment, 
+    DirectMessage, UserProfile, ChatRequest
+)
+from .forms import (
+    CustomUserCreationForm, PostForm, ProjectForm, JoinRequestForm, 
+    MessageForm, CommentForm, DirectMessageForm, ChatRequestForm
+)
+
+
+# ============================================================================
+# AUTHENTICATION VIEWS
+# ============================================================================
 
 def home(request):
+    """Home page view"""
     return render(request, 'main/home.html')
 
+
 def register(request):
+    """User registration view"""
     if request.user.is_authenticated:
         return redirect('main:post_list')
     
@@ -27,7 +49,35 @@ def register(request):
         form = CustomUserCreationForm()
     return render(request, 'main/register.html', {'form': form})
 
+
+def login_view(request):
+    """User login view"""
+    if request.user.is_authenticated:
+        return redirect('main:post_list')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('main:post_list')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'main/login.html', {'form': form})
+
+
+def logout_view(request):
+    """User logout view"""
+    logout(request)
+    return redirect('main:home')
+
+
+# ============================================================================
+# POST VIEWS
+# ============================================================================
+
 def post_list(request):
+    """Display list of all posts with optional search/filtering"""
     posts = Post.objects.all()
     query = request.GET.get('q', '')
     
@@ -42,7 +92,9 @@ def post_list(request):
         'query': query
     })
 
+
 def post_detail(request, pk):
+    """Display detailed view of a single post with comments"""
     post = get_object_or_404(Post, pk=pk)
     comments = post.comments.all()
     
@@ -63,7 +115,9 @@ def post_detail(request, pk):
         'form': form
     })
 
+
 def create_post(request):
+    """Create a new post"""
     if not request.user.is_authenticated:
         return redirect('main:register')
     
@@ -78,9 +132,31 @@ def create_post(request):
         form = PostForm()
     return render(request, 'main/create_post.html', {'form': form})
 
+
+def add_comment(request, pk):
+    """Add a comment to a post"""
+    post = get_object_or_404(Post, pk=pk)
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            return redirect('main:post_detail', pk=post.pk)
+    
+    return redirect('main:post_detail', pk=post.pk)
+
+
+# ============================================================================
+# PROJECT VIEWS
+# ============================================================================
+
 def project_list(request):
+    """Display list of all open projects with filtering and search"""
     projects = Project.objects.filter(is_open=True)
-    selected_categories = request.GET.getlist('category')  # Get multiple categories
+    selected_categories = request.GET.getlist('category')
     query = request.GET.get('q', '')
     
     if selected_categories:
@@ -101,11 +177,15 @@ def project_list(request):
         'query': query
     })
 
+
 def project_detail(request, pk):
+    """Display detailed view of a single project"""
     project = get_object_or_404(Project, pk=pk)
     return render(request, 'main/project_detail.html', {'project': project})
 
+
 def create_project(request):
+    """Create a new project"""
     if not request.user.is_authenticated:
         return redirect('main:register')
     
@@ -120,34 +200,26 @@ def create_project(request):
         form = ProjectForm()
     return render(request, 'main/create_project.html', {'form': form})
 
+
 def jobs(request):
+    """Jobs/opportunities page"""
     return render(request, 'main/jobs.html')
 
-def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('main:post_list')
-    
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('main:post_list')
-    else:
-        form = AuthenticationForm()
-    return render(request, 'main/login.html', {'form': form})
 
-def logout_view(request):
-    logout(request)
-    return redirect('main:home')
-
+# ============================================================================
+# JOIN REQUEST VIEWS (Project Applications)
+# ============================================================================
 
 @login_required(login_url='main:login')
 def request_to_join(request, pk):
+    """Submit a request to join a project"""
     project = get_object_or_404(Project, pk=pk)
     
     # Check if user already requested
-    existing_request = JoinRequest.objects.filter(project=project, user=request.user).first()
+    existing_request = JoinRequest.objects.filter(
+        project=project, 
+        user=request.user
+    ).first()
     
     if existing_request:
         return render(request, 'main/project_detail.html', {
@@ -180,7 +252,7 @@ def request_to_join(request, pk):
 
 @login_required(login_url='main:login')
 def join_requests(request):
-    # Get all pending join requests for projects created by this user
+    """View join requests for projects created by current user"""
     pending_requests = JoinRequest.objects.filter(
         project__author=request.user,
         status='pending'
@@ -192,11 +264,71 @@ def join_requests(request):
 
 
 @login_required(login_url='main:login')
+def my_join_requests(request):
+    """View join requests made by current user"""
+    my_requests = JoinRequest.objects.filter(
+        user=request.user
+    ).order_by('-created_at')
+    
+    return render(request, 'main/my_join_requests.html', {
+        'my_requests': my_requests
+    })
+
+
+@login_required(login_url='main:login')
+def approve_request(request, request_id):
+    """Approve a join request (project creator only)"""
+    join_req = get_object_or_404(JoinRequest, pk=request_id)
+    
+    if request.user != join_req.project.author:
+        return redirect('main:home')
+    
+    join_req.status = 'approved'
+    join_req.save()
+    
+    # Send approval message
+    Message.objects.create(
+        join_request=join_req,
+        sender=request.user,
+        content=f"Your request to join '{join_req.project.title}' has been approved!"
+    )
+    
+    return redirect('main:chat', request_id=request_id)
+
+
+@login_required(login_url='main:login')
+def reject_request(request, request_id):
+    """Reject a join request (project creator only)"""
+    join_req = get_object_or_404(JoinRequest, pk=request_id)
+    
+    if request.user != join_req.project.author:
+        return redirect('main:home')
+    
+    join_req.status = 'rejected'
+    join_req.save()
+    
+    # Send rejection message
+    Message.objects.create(
+        join_request=join_req,
+        sender=request.user,
+        content=f"Unfortunately, your request to join '{join_req.project.title}' was rejected."
+    )
+    
+    return redirect('main:join_requests')
+
+
+# ============================================================================
+# LEGACY CHAT VIEWS (Join Request Messages)
+# ============================================================================
+
+@login_required(login_url='main:login')
 def chat_view(request, request_id):
+    """Chat interface for join request discussions"""
     join_request = get_object_or_404(JoinRequest, pk=request_id)
     
     # Check if user is either creator or applicant
-    if request.user != join_request.project.author and request.user != join_request.user:
+    if (request.user != join_request.project.author and 
+        request.user != join_request.user):
         return redirect('main:home')
     
     if request.method == 'POST':
@@ -225,80 +357,25 @@ def chat_view(request, request_id):
 
 
 @login_required(login_url='main:login')
-def approve_request(request, request_id):
-    join_req = get_object_or_404(JoinRequest, pk=request_id)
-    
-    if request.user != join_req.project.author:
-        return redirect('main:home')
-    
-    join_req.status = 'approved'
-    join_req.save()
-    
-    # Send approval message
-    Message.objects.create(
-        join_request=join_req,
-        sender=request.user,
-        content=f"Your request to join '{join_req.project.title}' has been approved!"
-    )
-    
-    return redirect('main:chat', request_id=request_id)
-
-
-@login_required(login_url='main:login')
-def reject_request(request, request_id):
-    join_req = get_object_or_404(JoinRequest, pk=request_id)
-    
-    if request.user != join_req.project.author:
-        return redirect('main:home')
-    
-    join_req.status = 'rejected'
-    join_req.save()
-    
-    # Send rejection message
-    Message.objects.create(
-        join_request=join_req,
-        sender=request.user,
-        content=f"Unfortunately, your request to join '{join_req.project.title}' was rejected."
-    )
-    
-    return redirect('main:join_requests')
-
-
-@login_required(login_url='main:login')
-def get_notification_count(request):
-    # Get count of unread messages for the user
-    count = Message.objects.filter(
-        join_request__project__author=request.user,
-        is_read=False
-    ).count()
-    return {'unread_count': count}
-
-
-@login_required(login_url='main:login')
-def my_join_requests(request):
-    # Get all join requests made by this user
-    my_requests = JoinRequest.objects.filter(user=request.user).order_by('-created_at')
-    
-    return render(request, 'main/my_join_requests.html', {
-        'my_requests': my_requests
-    })
-
-
-@login_required(login_url='main:login')
 def inbox(request):
-    # Get all conversations for the user (both sent requests and incoming requests)
-    
+    """Unified inbox for join request conversations"""
     # Requests sent by user (as applicant)
-    sent_requests = JoinRequest.objects.filter(user=request.user).order_by('-updated_at')
+    sent_requests = JoinRequest.objects.filter(
+        user=request.user
+    ).order_by('-updated_at')
     
     # Requests received by user (as project creator)
-    received_requests = JoinRequest.objects.filter(project__author=request.user).order_by('-updated_at')
+    received_requests = JoinRequest.objects.filter(
+        project__author=request.user
+    ).order_by('-updated_at')
     
-    # Combine and get last message for each
     conversations = []
     
+    # Process sent requests
     for join_req in sent_requests:
-        last_message = Message.objects.filter(join_request=join_req).order_by('-created_at').first()
+        last_message = Message.objects.filter(
+            join_request=join_req
+        ).order_by('-created_at').first()
         unread_count = Message.objects.filter(
             join_request=join_req, 
             is_read=False
@@ -312,8 +389,11 @@ def inbox(request):
             'conversation_type': 'applicant'
         })
     
+    # Process received requests
     for join_req in received_requests:
-        last_message = Message.objects.filter(join_request=join_req).order_by('-created_at').first()
+        last_message = Message.objects.filter(
+            join_request=join_req
+        ).order_by('-created_at').first()
         unread_count = Message.objects.filter(
             join_request=join_req, 
             is_read=False
@@ -329,7 +409,11 @@ def inbox(request):
     
     # Sort by most recent message
     conversations.sort(
-        key=lambda x: x['last_message'].created_at if x['last_message'] else x['join_request'].updated_at,
+        key=lambda x: (
+            x['last_message'].created_at 
+            if x['last_message'] 
+            else x['join_request'].updated_at
+        ),
         reverse=True
     )
     
@@ -339,23 +423,22 @@ def inbox(request):
 
 
 @login_required(login_url='main:login')
-def add_comment(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    
-    if request.method == 'POST':
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-            return redirect('main:post_detail', pk=post.pk)
-    
-    return redirect('main:post_detail', pk=post.pk)
+def get_notification_count(request):
+    """Get count of unread messages (AJAX endpoint)"""
+    count = Message.objects.filter(
+        join_request__project__author=request.user,
+        is_read=False
+    ).count()
+    return {'unread_count': count}
 
+
+# ============================================================================
+# DIRECT MESSAGE VIEWS (One-to-One Messaging)
+# ============================================================================
 
 @login_required(login_url='main:login')
 def send_direct_message(request, username):
+    """Send a direct message to another user"""
     recipient = get_object_or_404(User, username=username)
     
     # Prevent messaging yourself
@@ -417,9 +500,13 @@ def send_direct_message(request, username):
 
 @login_required(login_url='main:login')
 def messages_inbox(request):
-    # Get all direct messages for user (both sent and received)
-    received_messages = DirectMessage.objects.filter(recipient=request.user).order_by('-created_at')
-    sent_messages = DirectMessage.objects.filter(sender=request.user).order_by('-created_at')
+    """View all direct message conversations"""
+    received_messages = DirectMessage.objects.filter(
+        recipient=request.user
+    ).order_by('-created_at')
+    sent_messages = DirectMessage.objects.filter(
+        sender=request.user
+    ).order_by('-created_at')
     
     # Group conversations
     conversations = {}
@@ -448,7 +535,10 @@ def messages_inbox(request):
         conversations[key]['messages'].append(msg)
     
     # Mark messages as read
-    DirectMessage.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    DirectMessage.objects.filter(
+        recipient=request.user, 
+        is_read=False
+    ).update(is_read=True)
     
     return render(request, 'main/messages_inbox.html', {
         'conversations': conversations
@@ -457,6 +547,7 @@ def messages_inbox(request):
 
 @login_required(login_url='main:login')
 def message_thread(request, username):
+    """View conversation thread with specific user"""
     user = get_object_or_404(User, username=username)
     
     # Get conversation between request.user and user
@@ -466,7 +557,11 @@ def message_thread(request, username):
     ).order_by('created_at')
     
     # Mark messages as read
-    DirectMessage.objects.filter(sender=user, recipient=request.user, is_read=False).update(is_read=True)
+    DirectMessage.objects.filter(
+        sender=user, 
+        recipient=request.user, 
+        is_read=False
+    ).update(is_read=True)
     
     if request.method == 'POST':
         form = DirectMessageForm(request.POST)
@@ -486,8 +581,13 @@ def message_thread(request, username):
     })
 
 
+# ============================================================================
+# USER SETTINGS
+# ============================================================================
+
 @login_required(login_url='main:login')
 def settings_page(request):
+    """User settings page"""
     try:
         profile = request.user.userprofile
     except UserProfile.DoesNotExist:
@@ -504,9 +604,13 @@ def settings_page(request):
     })
 
 
+# ============================================================================
+# CHAT REQUEST VIEWS (Post/Project Message Requests)
+# ============================================================================
+
 @login_required(login_url='main:login')
 def request_to_chat(request, post_id):
-    """Send a chat request to post creator"""
+    """Send a chat request to a post's author"""
     post = get_object_or_404(Post, pk=post_id)
     recipient = post.author
     
@@ -517,7 +621,13 @@ def request_to_chat(request, post_id):
         })
     
     # Check if already requested
-    existing = ChatRequest.objects.filter(sender=request.user, recipient=recipient, post=post, status='pending').first()
+    existing = ChatRequest.objects.filter(
+        sender=request.user, 
+        recipient=recipient, 
+        post=post, 
+        status='pending'
+    ).first()
+    
     if existing:
         return render(request, 'main/error.html', {
             'error': 'You already have a pending chat request with this user for this post.'
@@ -544,7 +654,7 @@ def request_to_chat(request, post_id):
 
 @login_required(login_url='main:login')
 def request_to_chat_project(request, project_id):
-    """Send a chat request to project author"""
+    """Send a chat request to a project's author"""
     project = get_object_or_404(Project, pk=project_id)
     recipient = project.author
     
@@ -555,7 +665,13 @@ def request_to_chat_project(request, project_id):
         })
     
     # Check if already requested
-    existing = ChatRequest.objects.filter(sender=request.user, recipient=recipient, project=project, status='pending').first()
+    existing = ChatRequest.objects.filter(
+        sender=request.user, 
+        recipient=recipient, 
+        project=project, 
+        status='pending'
+    ).first()
+    
     if existing:
         return render(request, 'main/error.html', {
             'error': 'You already have a pending chat request with this user for this project.'
@@ -583,7 +699,10 @@ def request_to_chat_project(request, project_id):
 @login_required(login_url='main:login')
 def chat_requests_inbox(request):
     """View incoming chat requests"""
-    chat_requests = ChatRequest.objects.filter(recipient=request.user, status='pending').order_by('-created_at')
+    chat_requests = ChatRequest.objects.filter(
+        recipient=request.user, 
+        status='pending'
+    ).order_by('-created_at')
     
     return render(request, 'main/chat_requests_inbox.html', {
         'chat_requests': chat_requests
@@ -608,11 +727,13 @@ def reject_chat_request(request, chat_request_id):
     return redirect('main:unified_chat')
 
 
+# ============================================================================
+# UNIFIED CHAT VIEW
+# ============================================================================
+
 @login_required(login_url='main:login')
 def unified_chat(request):
-    """Unified chat page with messages and chat requests"""
-    from django.core.serializers import serialize
-    import json
+    """Unified chat interface combining direct messages and chat requests"""
     
     # Handle chat request actions
     if request.method == 'POST':
@@ -630,9 +751,13 @@ def unified_chat(request):
             chat_req.save()
             return redirect('main:unified_chat')
     
-    # Get all direct messages for user (both sent and received)
-    received_messages = DirectMessage.objects.filter(recipient=request.user).order_by('-created_at')
-    sent_messages = DirectMessage.objects.filter(sender=request.user).order_by('-created_at')
+    # Get all direct messages for user
+    received_messages = DirectMessage.objects.filter(
+        recipient=request.user
+    ).order_by('-created_at')
+    sent_messages = DirectMessage.objects.filter(
+        sender=request.user
+    ).order_by('-created_at')
     
     # Group conversations
     conversations = {}
@@ -660,9 +785,11 @@ def unified_chat(request):
             }
         conversations[key]['messages'].append(msg)
     
-    # Add people from chat requests (both sent and received approved requests)
-    # Get chat requests sent by this user (people they requested to chat with)
-    sent_chat_requests = ChatRequest.objects.filter(sender=request.user, status='approved').order_by('-created_at')
+    # Add people from approved chat requests
+    sent_chat_requests = ChatRequest.objects.filter(
+        sender=request.user, 
+        status='approved'
+    ).order_by('-created_at')
     for chat_req in sent_chat_requests:
         key = chat_req.recipient.username
         if key not in conversations:
@@ -673,8 +800,10 @@ def unified_chat(request):
                 'messages': []
             }
     
-    # Get chat requests received by this user that were approved
-    received_chat_requests = ChatRequest.objects.filter(recipient=request.user, status='approved').order_by('-created_at')
+    received_chat_requests = ChatRequest.objects.filter(
+        recipient=request.user, 
+        status='approved'
+    ).order_by('-created_at')
     for chat_req in received_chat_requests:
         key = chat_req.sender.username
         if key not in conversations:
@@ -685,36 +814,34 @@ def unified_chat(request):
                 'messages': []
             }
     
-    # Mark messages as read
-    DirectMessage.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    # Serialize messages to JSON for frontend
+    for username, conv in conversations.items():
+        messages = conv['messages']
+        messages_json = json.dumps([{
+            'id': msg.id,
+            'sender_id': msg.sender.id,
+            'sender_username': msg.sender.username,
+            'recipient_id': msg.recipient.id,
+            'content': msg.content,
+            'created_at': msg.created_at.isoformat(),
+            'is_read': msg.is_read
+        } for msg in messages])
+        conversations[username]['messages_json'] = messages_json
     
-    # Serialize messages to JSON for each conversation
-    for key in conversations:
-        messages_list = []
-        for msg in conversations[key]['messages']:
-            messages_list.append({
-                'id': msg.id,
-                'sender_id': msg.sender.id,
-                'sender_username': msg.sender.username,
-                'recipient_id': msg.recipient.id,
-                'content': msg.content,
-                'created_at': msg.created_at.isoformat(),
-                'is_read': msg.is_read
-            })
-        conversations[key]['messages_json'] = json.dumps(messages_list)
+    # Get chat requests
+    chat_requests = ChatRequest.objects.filter(
+        recipient=request.user, 
+        status='pending'
+    ).order_by('-created_at')
     
-    # Get pending chat requests (only for the Requests tab)
-    chat_requests = ChatRequest.objects.filter(recipient=request.user, status='pending').order_by('-created_at')
-    
-    # Get unread counts
-    unread_messages = sum(conv['unread_count'] for conv in conversations.values())
-    unread_chat_requests = chat_requests.count()
-    unread_total = unread_messages + unread_chat_requests
+    # Mark direct messages as read
+    DirectMessage.objects.filter(
+        recipient=request.user, 
+        is_read=False
+    ).update(is_read=True)
     
     return render(request, 'main/unified_chat.html', {
         'conversations': conversations,
         'chat_requests': chat_requests,
-        'unread_messages': unread_messages,
-        'unread_chat_requests': unread_chat_requests,
-        'unread_total': unread_total
+        'current_user_id': request.user.id
     })

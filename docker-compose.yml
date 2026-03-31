@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: artisticsound-db
+    environment:
+      POSTGRES_DB: artisticsound
+      POSTGRES_USER: artisticsound_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - artisticsound-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artisticsound_user -d artisticsound"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Application
+  web:
+    build: .
+    container_name: artisticsound-web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=artisticsound
+      - DB_USER=artisticsound_user
+      - DB_PASSWORD=${DB_PASSWORD:-secure_password_change_me}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this-in-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - artisticsound-network
+    restart: unless-stopped
+
+  # Optional: Redis for caching/sessions (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: artisticsound-redis
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - artisticsound-network
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  artisticsound-network:
+    driver: bridge
