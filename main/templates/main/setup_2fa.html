@@ -1,0 +1,110 @@
+{% extends "main/base.html" %}
+
+{% block title %}Setup Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">🔐 Two-Factor Authentication Setup</h5>
+                </div>
+                <div class="card-body">
+                    {% if success %}
+                        <div class="alert alert-success">
+                            {{ message }}
+                        </div>
+                        <a href="{% url 'main:settings' %}" class="btn btn-primary btn-block">Back to Settings</a>
+                    {% elif error %}
+                        <div class="alert alert-danger">
+                            {{ error }}
+                        </div>
+                        {% if step == 'verify' %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="otp_code">Enter 6-digit code from your authenticator app:</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="otp_code" 
+                                           name="otp_code" 
+                                           placeholder="000000" 
+                                           maxlength="6" 
+                                           required 
+                                           autofocus>
+                                    <small class="form-text text-muted">You can space them out: 000 000</small>
+                                </div>
+                                <input type="hidden" name="action" value="verify">
+                                <button type="submit" class="btn btn-primary btn-block">Verify Code</button>
+                            </form>
+                            <hr>
+                            <p class="text-muted"><strong>Can't scan the QR code?</strong></p>
+                            <p>Enter this key manually in your authenticator app:</p>
+                            <div class="alert alert-info">
+                                <code>{{ manual_entry_key }}</code>
+                            </div>
+                        {% endif %}
+                    {% elif step == 'verify' %}
+                        <p class="text-muted mb-4">Scan this QR code with your authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.)</p>
+                        
+                        <div class="text-center mb-4">
+                            <img src="{{ qr_code }}" alt="QR Code" style="max-width: 300px;">
+                        </div>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="otp_code">Enter the 6-digit code from your authenticator app:</label>
+                                <input type="text" 
+                                       class="form-control text-center" 
+                                       id="otp_code" 
+                                       name="otp_code" 
+                                       placeholder="000000" 
+                                       maxlength="6" 
+                                       required 
+                                       autofocus>
+                                <small class="form-text text-muted">You can space them out: 000 000</small>
+                            </div>
+                            <input type="hidden" name="action" value="verify">
+                            <button type="submit" class="btn btn-success btn-block">Verify & Enable 2FA</button>
+                        </form>
+                        
+                        <hr>
+                        <p class="text-muted"><strong>Can't scan the QR code?</strong></p>
+                        <p>Enter this key manually in your authenticator app:</p>
+                        <div class="alert alert-info">
+                            <code>{{ secret }}</code>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <strong>What is Two-Factor Authentication?</strong><br>
+                            2FA adds an extra layer of security by requiring a code from your phone in addition to your password when logging in.
+                        </div>
+                        
+                        <h6>Steps:</h6>
+                        <ol>
+                            <li>Download a free authenticator app:
+                                <ul>
+                                    <li>Google Authenticator</li>
+                                    <li>Microsoft Authenticator</li>
+                                    <li>Authy</li>
+                                </ul>
+                            </li>
+                            <li>Click the button below to generate a QR code</li>
+                            <li>Scan the QR code with your authenticator app</li>
+                            <li>Enter the 6-digit code to verify</li>
+                        </ol>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="generate">
+                            <button type="submit" class="btn btn-primary btn-block">Generate QR Code</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

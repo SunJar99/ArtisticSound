@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -166,6 +167,15 @@
             border-left: 3px solid #667eea;
             color: #333;
             line-height: 1.5;
+            max-width: 55%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        .message-content a {
+            color: #0066cc;
+            text-decoration: underline;
         }
         
         .message.own .message-sender {
@@ -313,7 +323,7 @@
                 {% for message in messages %}
                     <div class="message {% if message.sender == user %}own{% endif %}">
                         <div class="message-sender">{{ message.sender.username }}</div>
-                        <div class="message-content">{{ message.content }}</div>
+                        <div class="message-content">{{ message.content|linkify|safe }}</div>
                         <div class="message-time">{{ message.created_at|date:"M d, Y H:i" }}</div>
                     </div>
                 {% empty %}

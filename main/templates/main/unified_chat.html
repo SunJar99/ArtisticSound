@@ -217,12 +217,16 @@
             overflow-y: auto;
             background: #f9f9f9;
             max-height: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         
         .message {
-            margin-bottom: 15px;
+            margin-bottom: 0;
             display: flex;
             animation: slideIn 0.3s ease;
+            width: 100%;
         }
         
         @keyframes slideIn {
@@ -240,11 +244,31 @@
             justify-content: flex-end;
         }
         
+        .message.other {
+            justify-content: flex-start;
+        }
+        
         .message-content {
-            max-width: 70%;
-            padding: 12px 15px;
+            max-width: 55%;
+            padding: 10px 14px;
             border-radius: 12px;
+            overflow-wrap: break-word;
             word-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+        
+        .message-content a {
+            color: inherit;
+            text-decoration: underline;
+        }
+        
+        .message.own .message-content a {
+            color: #fff;
+        }
+        
+        .message.other .message-content a {
+            color: #0066cc;
         }
         
         .message.own .message-content {
@@ -406,7 +430,7 @@
             }
             
             .message-content {
-                max-width: 85%;
+                max-width: 70%;
             }
         }
         
@@ -551,6 +575,29 @@
     </div>
     
     <script>
+        // Parse URLs in text and convert to clickable links
+        function parseLinksInMessage(text) {
+            const urlRegex = /(https?:\/\/[^\s<>"']+)/gi;
+            let html = '';
+            let lastIndex = 0;
+            let match;
+            
+            const regex = new RegExp(urlRegex.source, 'gi');
+            while ((match = regex.exec(text)) !== null) {
+                // Add the text before the URL
+                html += escapeHtml(text.substring(lastIndex, match.index));
+                
+                // Add the URL as a clickable link
+                const url = match[0];
+                html += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>`;
+                lastIndex = match.index + url.length;
+            }
+            
+            // Add remaining text
+            html += escapeHtml(text.substring(lastIndex));
+            return html;
+        }
+        
         // Store messages data globally
         let messagesDB = {};
         document.addEventListener('DOMContentLoaded', function() {
@@ -630,10 +677,9 @@
                     
                     html += `
                         <div class="message ${isOwn ? 'own' : 'other'}">
-                            <div>
+                            <div class="message-content">
                                 ${!isOwn ? `<div class="message-sender">${escapeHtml(msg.sender_username)}</div>` : ''}
-                                <div class="message-content">${escapeHtml(msg.content)}</div>
-                                <div class="message-time">${timeStr}</div>
+                                <div>${parseLinksInMessage(msg.content)}</div>
                             </div>
                         </div>
                     `;
@@ -714,13 +760,21 @@
                         
                         const messageDiv = document.createElement('div');
                         messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
-                        messageDiv.innerHTML = `
-                            <div>
-                                ${!isOwn ? `<div class="message-sender">${escapeHtml(data.message.sender_username)}</div>` : ''}
-                                <div class="message-content">${escapeHtml(data.message.content)}</div>
-                                <div class="message-time">${timeStr}</div>
-                            </div>
-                        `;
+                        const content = document.createElement('div');
+                        content.className = 'message-content';
+                        
+                        if (!isOwn) {
+                            const senderDiv = document.createElement('div');
+                            senderDiv.className = 'message-sender';
+                            senderDiv.textContent = data.message.sender_username;
+                            content.appendChild(senderDiv);
+                        }
+                        
+                        const textDiv = document.createElement('div');
+                        textDiv.innerHTML = parseLinksInMessage(data.message.content);
+                        content.appendChild(textDiv);
+                        
+                        messageDiv.appendChild(content);
                         messagesDisplay.appendChild(messageDiv);
                         
                         // Scroll to bottom

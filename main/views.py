@@ -59,6 +59,20 @@ def login_view(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            
+            # Check if user has 2FA enabled (with error handling)
+            try:
+                from django_otp.plugins.otp_totp.models import TOTP_DEVICE
+                if TOTP_DEVICE.objects.filter(user=user, confirmed=True).exists():
+                    # Store user info in session and redirect to 2FA
+                    request.session['2fa_username'] = user.username
+                    request.session['2fa_user_id'] = user.id
+                    return redirect('main:login_2fa')
+            except Exception as e:
+                # If django-otp is not properly configured, just log in normally
+                pass
+            
+            # No 2FA, complete login normally
             login(request, user)
             return redirect('main:post_list')
     else:
@@ -593,6 +607,15 @@ def settings_page(request):
     except UserProfile.DoesNotExist:
         profile = UserProfile.objects.create(user=request.user)
     
+    # Check 2FA status (with error handling)
+    has_2fa = False
+    try:
+        from django_otp.plugins.otp_totp.models import TOTP_DEVICE
+        has_2fa = TOTP_DEVICE.objects.filter(user=request.user, confirmed=True).exists()
+    except Exception as e:
+        # If django-otp is not properly configured, just set has_2fa to False
+        pass
+    
     if request.method == 'POST':
         allow_messages = request.POST.get('allow_post_messages') == 'on'
         profile.allow_post_messages = allow_messages
@@ -600,7 +623,8 @@ def settings_page(request):
         return redirect('main:settings')
     
     return render(request, 'main/settings.html', {
-        'profile': profile
+        'profile': profile,
+        'has_2fa': has_2fa
     })
 
 
@@ -844,4 +868,152 @@ def unified_chat(request):
         'conversations': conversations,
         'chat_requests': chat_requests,
         'current_user_id': request.user.id
+    })
+
+
+# ============================================================================
+# TWO-FACTOR AUTHENTICATION (2FA/TOTP) VIEWS
+# ============================================================================
+
+@login_required(login_url='main:login')
+def setup_2fa(request):
+    """Setup TOTP-based two-factor authentication"""
+    from .auth_2fa import generate_totp_secret, get_totp_uri, generate_qr_code, setup_totp_for_user
+    
+    # Check if user already has 2FA enabled (with error handling)
+    try:
+        from django_otp.plugins.otp_totp.models import TOTP_DEVICE
+        if TOTP_DEVICE.objects.filter(user=request.user, confirmed=True).exists():
+            return redirect('main:settings')
+    except Exception as e:
+        # If django-otp is not available, continue with setup
+        pass
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'generate':
+            # Generate new secret
+            secret = generate_totp_secret()
+            request.session['totp_secret'] = secret
+            request.session['totp_step'] = 'verify'
+            
+            # Generate QR code
+            uri = get_totp_uri(request.user, secret)
+            qr_code = generate_qr_code(uri)
+            
+            return render(request, 'main/setup_2fa.html', {
+                'secret': secret,
+                'qr_code': qr_code,
+                'step': 'verify',
+                'manual_entry_key': secret
+            })
+        
+        elif action == 'verify':
+            # Verify the TOTP code
+            secret = request.session.get('totp_secret')
+            otp_code = request.POST.get('otp_code', '').replace(' ', '')
+            
+            if not secret:
+                return redirect('main:setup_2fa')
+            
+            # Verify the code
+            import pyotp
+            totp = pyotp.TOTP(secret)
+            if totp.verify(otp_code, valid_window=1):
+                # Setup the device
+                setup_totp_for_user(request.user, secret)
+                from .auth_2fa import confirm_totp_device
+                confirm_totp_device(request.user)
+                
+                # Clean up session
+                request.session.pop('totp_secret', None)
+                request.session.pop('totp_step', None)
+                
+                return render(request, 'main/setup_2fa.html', {
+                    'success': True,
+                    'message': '2FA has been successfully enabled!'
+                })
+            else:
+                return render(request, 'main/setup_2fa.html', {
+                    'error': 'Invalid code. Please try again.',
+                    'step': 'verify',
+                    'secret': secret,
+                    'manual_entry_key': secret
+                })
+    
+    return render(request, 'main/setup_2fa.html', {'step': 'start'})
+
+
+@login_required(login_url='main:login')
+def disable_2fa(request):
+    """Disable two-factor authentication"""
+    from .auth_2fa import disable_totp
+    
+    # Check if user has 2FA enabled (with error handling)
+    try:
+        from django_otp.plugins.otp_totp.models import TOTP_DEVICE
+        if not TOTP_DEVICE.objects.filter(user=request.user, confirmed=True).exists():
+            return redirect('main:settings')
+    except Exception as e:
+        # If django-otp is not available, redirect to settings
+        return redirect('main:settings')
+    
+    if request.method == 'POST':
+        password = request.POST.get('password', '')
+        
+        # Verify password
+        from django.contrib.auth import authenticate
+        if authenticate(username=request.user.username, password=password):
+            disable_totp(request.user)
+            return render(request, 'main/disable_2fa.html', {
+                'success': True,
+                'message': '2FA has been successfully disabled.'
+            })
+        else:
+            return render(request, 'main/disable_2fa.html', {
+                'error': 'Invalid password. Please try again.'
+            })
+    
+    return render(request, 'main/disable_2fa.html')
+
+
+def login_2fa(request):
+    """Second factor authentication during login"""
+    # Get username from session (set during first login attempt)
+    username = request.session.get('2fa_username')
+    user_id = request.session.get('2fa_user_id')
+    
+    if not username or not user_id:
+        return redirect('main:login')
+    
+    if request.method == 'POST':
+        otp_code = request.POST.get('otp_code', '').replace(' ', '')
+        
+        try:
+            user = User.objects.get(id=user_id, username=username)
+        except User.DoesNotExist:
+            return render(request, 'main/login_2fa.html', {
+                'error': 'User not found.'
+            })
+        
+        # Verify the TOTP code
+        from .auth_2fa import verify_totp
+        if verify_totp(user, otp_code):
+            # Complete the login
+            login(request, user)
+            
+            # Clean up session
+            request.session.pop('2fa_username', None)
+            request.session.pop('2fa_user_id', None)
+            
+            return redirect('main:post_list')
+        else:
+            return render(request, 'main/login_2fa.html', {
+                'error': 'Invalid authentication code. Please try again.',
+                'username': username
+            })
+    
+    return render(request, 'main/login_2fa.html', {
+        'username': username
     })

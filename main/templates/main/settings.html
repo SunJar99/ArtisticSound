@@ -281,6 +281,41 @@
                         </div>
                     </div>
                     
+                    <div class="setting-item">
+                        <div class="setting-label">🔐 Two-Factor Authentication</div>
+                        <div class="setting-description">
+                            Add an extra layer of security to your account. Requires a code from your phone in addition to your password.
+                        </div>
+                        
+                        <div style="padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                            {% if has_2fa %}
+                                <div style="color: #28a745; font-weight: bold; margin-bottom: 10px;">
+                                    ✅ Two-Factor Authentication Enabled
+                                </div>
+                                <p style="color: #666; margin-bottom: 15px;">
+                                    Your account is protected with 2FA. A code from your authenticator app is required when you log in.
+                                </p>
+                                <a href="{% url 'main:disable_2fa' %}" class="btn btn-warning" style="background: #ffc107; color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block;">
+                                    Disable 2FA
+                                </a>
+                            {% else %}
+                                <div style="color: #ff6700; font-weight: bold; margin-bottom: 10px;">
+                                    ⚠️ Two-Factor Authentication Disabled
+                                </div>
+                                <p style="color: #666; margin-bottom: 15px;">
+                                    Your account is not protected with 2FA. Enable it to improve your account security.
+                                </p>
+                                <a href="{% url 'main:setup_2fa' %}" class="btn btn-success" style="background: #28a745; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block;">
+                                    Enable 2FA
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="info-box">
+                            💡 Download an authenticator app like Google Authenticator, Microsoft Authenticator, or Authy to get started.
+                        </div>
+                    </div>
+                    
                     <div class="button-group">
                         <a href="{% url 'main:post_list' %}" >Back</a>
                     </div>

@@ -33,4 +33,9 @@ urlpatterns = [
     path('chat-request/<int:chat_request_id>/approve/', views.approve_chat_request, name='approve_chat_request'),
     path('chat-request/<int:chat_request_id>/reject/', views.reject_chat_request, name='reject_chat_request'),
     path('chat/', views.unified_chat, name='unified_chat'),
+    
+    # Two-Factor Authentication URLs
+    path('setup-2fa/', views.setup_2fa, name='setup_2fa'),
+    path('disable-2fa/', views.disable_2fa, name='disable_2fa'),
+    path('login-2fa/', views.login_2fa, name='login_2fa'),
 ]

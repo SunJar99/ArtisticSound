@@ -1,0 +1,74 @@
+{% extends "main/base.html" %}
+
+{% block title %}Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">🔐 Two-Factor Authentication</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Welcome back, <strong>{{ username }}</strong><br>
+                        Enter the 6-digit code from your authenticator app to complete login.
+                    </p>
+                    
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="otp_code" class="form-label">Authentication Code</label>
+                            <input type="text" 
+                                   class="form-control form-control-lg text-center" 
+                                   id="otp_code" 
+                                   name="otp_code" 
+                                   placeholder="000000" 
+                                   maxlength="6" 
+                                   autocomplete="off"
+                                   required 
+                                   autofocus
+                                   pattern="[0-9\s]*">
+                            <small class="form-text text-muted d-block mt-2">
+                                You can space them out: <code>000 000</code>
+                            </small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block btn-lg">
+                            Verify & Login
+                        </button>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'main:login' %}" class="btn btn-secondary btn-block">
+                            Back to Login
+                        </a>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4" role="alert">
+                        <small>
+                            <strong>Tip:</strong> Make sure your device's time is synchronized correctly.
+                            Authenticator apps use time-based codes that expire every 30 seconds.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #otp_code {
+        letter-spacing: 8px;
+        font-family: monospace;
+        font-size: 24px;
+    }
+</style>
+{% endblock %}

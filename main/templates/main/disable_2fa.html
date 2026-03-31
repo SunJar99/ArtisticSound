@@ -1,0 +1,73 @@
+{% extends "main/base.html" %}
+
+{% block title %}Disable Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">⚠️ Disable Two-Factor Authentication</h5>
+                </div>
+                <div class="card-body">
+                    {% if success %}
+                        <div class="alert alert-success">
+                            <strong>Success!</strong> {{ message }}
+                        </div>
+                        <a href="{% url 'main:settings' %}" class="btn btn-primary btn-block">Back to Settings</a>
+                    {% elif error %}
+                        <div class="alert alert-danger">
+                            {{ error }}
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="password">Enter your password to confirm:</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       required 
+                                       autofocus>
+                            </div>
+                            <button type="submit" class="btn btn-danger btn-block">
+                                Disable 2FA
+                            </button>
+                            <a href="{% url 'main:settings' %}" class="btn btn-secondary btn-block mt-2">
+                                Cancel
+                            </a>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            <strong>Warning:</strong> Disabling 2FA will reduce your account's security. 
+                            Anyone with your password could access your account.
+                        </div>
+                        
+                        <p>To disable two-factor authentication, enter your password:</p>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       required 
+                                       autofocus>
+                            </div>
+                            <button type="submit" class="btn btn-danger btn-block">
+                                Confirm & Disable 2FA
+                            </button>
+                            <a href="{% url 'main:settings' %}" class="btn btn-secondary btn-block mt-2">
+                                Cancel
+                            </a>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
