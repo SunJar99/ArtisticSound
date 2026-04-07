@@ -1,9 +1,3 @@
-"""
-ArtisticSound Views Module
-
-This module contains all view functions for the ArtisticSound application.
-Organized into logical sections for better readability and maintenance.
-"""
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView
@@ -20,38 +14,43 @@ from .models import (
     DirectMessage, UserProfile, ChatRequest
 )
 from .forms import (
-    CustomUserCreationForm, PostForm, ProjectForm, JoinRequestForm, 
-    MessageForm, CommentForm, DirectMessageForm, ChatRequestForm
+    ArtistSignupForm, CreationForm, CollaborationForm, PitchForm, 
+    DialogueForm, FeedbackForm, DirectDialogueForm, ConversationInviteForm
 )
 
 
-# ============================================================================
-# AUTHENTICATION VIEWS
-# ============================================================================
+#  AUTH VIEWS
 
-def home(request):
-    """Home page view"""
+
+
+def welcome_stage(request):
+    """THE STAGE HAS BEEN OPENED FOR YOU, ARTISTS!"""
     return render(request, 'main/home.html')
 
 
-def register(request):
-    """User registration view"""
+
+
+
+def join_the_scene(request):
+    """JOIN THE SCENE AND BECOME AN ARTIST!"""
     if request.user.is_authenticated:
         return redirect('main:post_list')
     
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = ArtistSignupForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('main:post_list')
     else:
-        form = CustomUserCreationForm()
+        form = ArtistSignupForm()
     return render(request, 'main/register.html', {'form': form})
 
 
-def login_view(request):
-    """User login view"""
+
+
+
+def access_gateway(request):
     if request.user.is_authenticated:
         return redirect('main:post_list')
     
@@ -60,7 +59,6 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             
-            # Check if user has 2FA enabled (with error handling)
             try:
                 from django_otp.plugins.otp_totp.models import TOTP_DEVICE
                 if TOTP_DEVICE.objects.filter(user=user, confirmed=True).exists():
@@ -69,10 +67,8 @@ def login_view(request):
                     request.session['2fa_user_id'] = user.id
                     return redirect('main:login_2fa')
             except Exception as e:
-                # If django-otp is not properly configured, just log in normally
                 pass
             
-            # No 2FA, complete login normally
             login(request, user)
             return redirect('main:post_list')
     else:
@@ -80,18 +76,23 @@ def login_view(request):
     return render(request, 'main/login.html', {'form': form})
 
 
-def logout_view(request):
-    """User logout view"""
+
+
+
+def exit_stage(request):
+    """Leave the artistic stage lol"""
     logout(request)
     return redirect('main:home')
 
 
-# ============================================================================
-# POST VIEWS
-# ============================================================================
 
-def post_list(request):
-    """Display list of all posts with optional search/filtering"""
+
+
+
+#  POSTING VIEWSS
+
+def discover_creations(request):
+
     posts = Post.objects.all()
     query = request.GET.get('q', '')
     
@@ -107,13 +108,16 @@ def post_list(request):
     })
 
 
-def post_detail(request, pk):
-    """Display detailed view of a single post with comments"""
+
+
+
+def creation_spotlight(request, pk):
+
     post = get_object_or_404(Post, pk=pk)
     comments = post.comments.all()
     
     if request.method == 'POST':
-        form = CommentForm(request.POST)
+        form = FeedbackForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.post = post
@@ -121,7 +125,7 @@ def post_detail(request, pk):
             comment.save()
             return redirect('main:post_detail', pk=post.pk)
     else:
-        form = CommentForm()
+        form = FeedbackForm()
     
     return render(request, 'main/post_detail.html', {
         'post': post,
@@ -130,29 +134,31 @@ def post_detail(request, pk):
     })
 
 
-def create_post(request):
-    """Create a new post"""
+
+
+def craft_creation(request):
     if not request.user.is_authenticated:
         return redirect('main:register')
     
     if request.method == 'POST':
-        form = PostForm(request.POST)
+        form = CreationForm(request.POST)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
             return redirect('main:post_detail', pk=post.pk)
     else:
-        form = PostForm()
+        form = CreationForm()
     return render(request, 'main/create_post.html', {'form': form})
 
 
-def add_comment(request, pk):
-    """Add a comment to a post"""
+
+
+def share_feedback(request, pk):
     post = get_object_or_404(Post, pk=pk)
     
     if request.method == 'POST':
-        form = CommentForm(request.POST)
+        form = FeedbackForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.post = post
@@ -163,12 +169,12 @@ def add_comment(request, pk):
     return redirect('main:post_detail', pk=post.pk)
 
 
-# ============================================================================
-# PROJECT VIEWS
-# ============================================================================
+# PROJCET VIEWS
 
-def project_list(request):
-    """Display list of all open projects with filtering and search"""
+
+
+
+def collab_quest(request):
     projects = Project.objects.filter(is_open=True)
     selected_categories = request.GET.getlist('category')
     query = request.GET.get('q', '')
@@ -192,44 +198,52 @@ def project_list(request):
     })
 
 
-def project_detail(request, pk):
-    """Display detailed view of a single project"""
+
+
+def collaboration_space(request, pk):
+
     project = get_object_or_404(Project, pk=pk)
     return render(request, 'main/project_detail.html', {'project': project})
 
 
-def create_project(request):
-    """Create a new project"""
+
+
+
+def launch_vision(request):
+
     if not request.user.is_authenticated:
         return redirect('main:register')
     
     if request.method == 'POST':
-        form = ProjectForm(request.POST)
+        form = CollaborationForm(request.POST)
         if form.is_valid():
             project = form.save(commit=False)
             project.author = request.user
             project.save()
             return redirect('main:project_detail', pk=project.pk)
     else:
-        form = ProjectForm()
+        form = CollaborationForm()
     return render(request, 'main/create_project.html', {'form': form})
 
 
-def jobs(request):
-    """Jobs/opportunities page"""
+
+
+
+def opportunity_board(request):
+    """ shall discover creative opportunities and gigs"""
     return render(request, 'main/jobs.html')
 
 
-# ============================================================================
-# JOIN REQUEST VIEWS (Project Applications)
-# ============================================================================
+
+
+# JOIN REQUEST VIEWS
+
+
 
 @login_required(login_url='main:login')
-def request_to_join(request, pk):
-    """Submit a request to join a project"""
+def pitch_for_collab(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
-    # Check if user already requested
     existing_request = JoinRequest.objects.filter(
         project=project, 
         user=request.user
@@ -248,7 +262,7 @@ def request_to_join(request, pk):
         })
     
     if request.method == 'POST':
-        form = JoinRequestForm(request.POST)
+        form = PitchForm(request.POST)
         if form.is_valid():
             join_req = form.save(commit=False)
             join_req.project = project
@@ -256,7 +270,7 @@ def request_to_join(request, pk):
             join_req.save()
             return redirect('main:project_detail', pk=project.pk)
     else:
-        form = JoinRequestForm()
+        form = PitchForm()
     
     return render(request, 'main/join_project.html', {
         'project': project,
@@ -264,9 +278,12 @@ def request_to_join(request, pk):
     })
 
 
+
+
+
+
 @login_required(login_url='main:login')
-def join_requests(request):
-    """View join requests for projects created by current user"""
+def collab_applications(request):
     pending_requests = JoinRequest.objects.filter(
         project__author=request.user,
         status='pending'
@@ -275,11 +292,14 @@ def join_requests(request):
     return render(request, 'main/join_requests.html', {
         'pending_requests': pending_requests
     })
+    
+    
+    
+    
 
 
 @login_required(login_url='main:login')
-def my_join_requests(request):
-    """View join requests made by current user"""
+def my_pitches(request):
     my_requests = JoinRequest.objects.filter(
         user=request.user
     ).order_by('-created_at')
@@ -289,9 +309,11 @@ def my_join_requests(request):
     })
 
 
+
+
+
 @login_required(login_url='main:login')
-def approve_request(request, request_id):
-    """Approve a join request (project creator only)"""
+def greenlight_artist(request, request_id):
     join_req = get_object_or_404(JoinRequest, pk=request_id)
     
     if request.user != join_req.project.author:
@@ -299,8 +321,7 @@ def approve_request(request, request_id):
     
     join_req.status = 'approved'
     join_req.save()
-    
-    # Send approval message
+
     Message.objects.create(
         join_request=join_req,
         sender=request.user,
@@ -310,9 +331,12 @@ def approve_request(request, request_id):
     return redirect('main:chat', request_id=request_id)
 
 
+
+
+
+
 @login_required(login_url='main:login')
-def reject_request(request, request_id):
-    """Reject a join request (project creator only)"""
+def decline_application(request, request_id):
     join_req = get_object_or_404(JoinRequest, pk=request_id)
     
     if request.user != join_req.project.author:
@@ -331,13 +355,15 @@ def reject_request(request, request_id):
     return redirect('main:join_requests')
 
 
-# ============================================================================
-# LEGACY CHAT VIEWS (Join Request Messages)
-# ============================================================================
+
+
+# CHATTING VIEWS lmoao
+
+
 
 @login_required(login_url='main:login')
-def chat_view(request, request_id):
-    """Chat interface for join request discussions"""
+def collaboration_dialog(request, request_id):
+
     join_request = get_object_or_404(JoinRequest, pk=request_id)
     
     # Check if user is either creator or applicant
@@ -346,7 +372,7 @@ def chat_view(request, request_id):
         return redirect('main:home')
     
     if request.method == 'POST':
-        form = MessageForm(request.POST)
+        form = DialogueForm(request.POST)
         if form.is_valid():
             message = form.save(commit=False)
             message.join_request = join_request
@@ -354,9 +380,8 @@ def chat_view(request, request_id):
             message.save()
             return redirect('main:chat', request_id=request_id)
     else:
-        form = MessageForm()
-    
-    # Mark messages as read
+        form = DialogueForm()
+
     Message.objects.filter(
         join_request=join_request
     ).exclude(sender=request.user).update(is_read=True)
@@ -370,22 +395,29 @@ def chat_view(request, request_id):
     })
 
 
+
+
+
+
 @login_required(login_url='main:login')
-def inbox(request):
-    """Unified inbox for join request conversations"""
+def conversation_hub(request):
     # Requests sent by user (as applicant)
     sent_requests = JoinRequest.objects.filter(
         user=request.user
     ).order_by('-updated_at')
     
-    # Requests received by user (as project creator)
+
+
+
     received_requests = JoinRequest.objects.filter(
         project__author=request.user
     ).order_by('-updated_at')
     
     conversations = []
     
-    # Process sent requests
+
+
+
     for join_req in sent_requests:
         last_message = Message.objects.filter(
             join_request=join_req
@@ -403,7 +435,9 @@ def inbox(request):
             'conversation_type': 'applicant'
         })
     
-    # Process received requests
+
+
+
     for join_req in received_requests:
         last_message = Message.objects.filter(
             join_request=join_req
@@ -421,7 +455,7 @@ def inbox(request):
             'conversation_type': 'creator'
         })
     
-    # Sort by most recent message
+
     conversations.sort(
         key=lambda x: (
             x['last_message'].created_at 
@@ -436,8 +470,12 @@ def inbox(request):
     })
 
 
+
+
+
+
 @login_required(login_url='main:login')
-def get_notification_count(request):
+def pulse_check(request):
     """Get count of unread messages (AJAX endpoint)"""
     count = Message.objects.filter(
         join_request__project__author=request.user,
@@ -446,13 +484,12 @@ def get_notification_count(request):
     return {'unread_count': count}
 
 
-# ============================================================================
-# DIRECT MESSAGE VIEWS (One-to-One Messaging)
-# ============================================================================
+
+
+# DIRECT NESSAGE VIEWS
 
 @login_required(login_url='main:login')
-def send_direct_message(request, username):
-    """Send a direct message to another user"""
+def craft_message(request, username):
     recipient = get_object_or_404(User, username=username)
     
     # Prevent messaging yourself
@@ -460,8 +497,10 @@ def send_direct_message(request, username):
         return render(request, 'main/error.html', {
             'error': 'You cannot message yourself.'
         })
-    
-    # Check if recipient allows messages
+
+
+
+
     try:
         profile = recipient.userprofile
         if not profile.allow_post_messages:
@@ -469,8 +508,8 @@ def send_direct_message(request, username):
                 'error': f'{username} is not accepting direct messages at the moment.'
             })
     except UserProfile.DoesNotExist:
-        # Create profile if it doesn't exist
         UserProfile.objects.create(user=recipient)
+    
     
     post_id = request.GET.get('post_id')
     post = None
@@ -478,7 +517,7 @@ def send_direct_message(request, username):
         post = get_object_or_404(Post, pk=post_id)
     
     if request.method == 'POST':
-        form = DirectMessageForm(request.POST)
+        form = DirectDialogueForm(request.POST)
         if form.is_valid():
             message = form.save(commit=False)
             message.sender = request.user
@@ -486,7 +525,7 @@ def send_direct_message(request, username):
             message.post = post
             message.save()
             
-            # Return JSON for AJAX requests
+
             return JsonResponse({
                 'success': True,
                 'message': {
@@ -503,7 +542,7 @@ def send_direct_message(request, username):
                 'error': 'Invalid message form'
             })
     else:
-        form = DirectMessageForm()
+        form = DirectDialogueForm()
     
     return render(request, 'main/send_message.html', {
         'form': form,
@@ -512,8 +551,11 @@ def send_direct_message(request, username):
     })
 
 
+
+
+
 @login_required(login_url='main:login')
-def messages_inbox(request):
+def message_lounge(request):
     """View all direct message conversations"""
     received_messages = DirectMessage.objects.filter(
         recipient=request.user
@@ -522,7 +564,6 @@ def messages_inbox(request):
         sender=request.user
     ).order_by('-created_at')
     
-    # Group conversations
     conversations = {}
     
     for msg in received_messages:
@@ -548,7 +589,6 @@ def messages_inbox(request):
             }
         conversations[key]['messages'].append(msg)
     
-    # Mark messages as read
     DirectMessage.objects.filter(
         recipient=request.user, 
         is_read=False
@@ -559,18 +599,21 @@ def messages_inbox(request):
     })
 
 
+
+
+
+
 @login_required(login_url='main:login')
-def message_thread(request, username):
+def direct_connection(request, username):
     """View conversation thread with specific user"""
     user = get_object_or_404(User, username=username)
     
-    # Get conversation between request.user and user
     messages = DirectMessage.objects.filter(
         Q(sender=request.user, recipient=user) |
         Q(sender=user, recipient=request.user)
     ).order_by('created_at')
     
-    # Mark messages as read
+
     DirectMessage.objects.filter(
         sender=user, 
         recipient=request.user, 
@@ -578,7 +621,7 @@ def message_thread(request, username):
     ).update(is_read=True)
     
     if request.method == 'POST':
-        form = DirectMessageForm(request.POST)
+        form = DirectDialogueForm(request.POST)
         if form.is_valid():
             message = form.save(commit=False)
             message.sender = request.user
@@ -586,7 +629,7 @@ def message_thread(request, username):
             message.save()
             return redirect('main:message_thread', username=username)
     else:
-        form = DirectMessageForm()
+        form = DirectDialogueForm()
     
     return render(request, 'main/message_thread.html', {
         'user': user,
@@ -595,25 +638,25 @@ def message_thread(request, username):
     })
 
 
-# ============================================================================
-# USER SETTINGS
-# ============================================================================
+# USER SETTINGS VIEW 
+
+
+
+
 
 @login_required(login_url='main:login')
-def settings_page(request):
+def artist_studio(request):
     """User settings page"""
     try:
         profile = request.user.userprofile
     except UserProfile.DoesNotExist:
         profile = UserProfile.objects.create(user=request.user)
     
-    # Check 2FA status (with error handling)
     has_2fa = False
     try:
         from django_otp.plugins.otp_totp.models import TOTP_DEVICE
         has_2fa = TOTP_DEVICE.objects.filter(user=request.user, confirmed=True).exists()
     except Exception as e:
-        # If django-otp is not properly configured, just set has_2fa to False
         pass
     
     if request.method == 'POST':
@@ -628,13 +671,14 @@ def settings_page(request):
     })
 
 
-# ============================================================================
-# CHAT REQUEST VIEWS (Post/Project Message Requests)
-# ============================================================================
+# CHAT APPROVAL VIEWS  
+
+
+
+
 
 @login_required(login_url='main:login')
-def request_to_chat(request, post_id):
-    """Send a chat request to a post's author"""
+def initiate_collab_chat(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     recipient = post.author
     
@@ -658,7 +702,7 @@ def request_to_chat(request, post_id):
         })
     
     if request.method == 'POST':
-        form = ChatRequestForm(request.POST)
+        form = ConversationInviteForm(request.POST)
         if form.is_valid():
             chat_req = form.save(commit=False)
             chat_req.sender = request.user
@@ -667,7 +711,7 @@ def request_to_chat(request, post_id):
             chat_req.save()
             return redirect('main:unified_chat')
     else:
-        form = ChatRequestForm()
+        form = ConversationInviteForm()
     
     return render(request, 'main/request_to_chat.html', {
         'form': form,
@@ -676,9 +720,13 @@ def request_to_chat(request, post_id):
     })
 
 
+
+
+
+
+
 @login_required(login_url='main:login')
-def request_to_chat_project(request, project_id):
-    """Send a chat request to a project's author"""
+def initiate_project_chat(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
     recipient = project.author
     
@@ -702,7 +750,7 @@ def request_to_chat_project(request, project_id):
         })
     
     if request.method == 'POST':
-        form = ChatRequestForm(request.POST)
+        form = ConversationInviteForm(request.POST)
         if form.is_valid():
             chat_req = form.save(commit=False)
             chat_req.sender = request.user
@@ -711,7 +759,7 @@ def request_to_chat_project(request, project_id):
             chat_req.save()
             return redirect('main:unified_chat')
     else:
-        form = ChatRequestForm()
+        form = ConversationInviteForm()
     
     return render(request, 'main/request_to_chat.html', {
         'form': form,
@@ -720,9 +768,12 @@ def request_to_chat_project(request, project_id):
     })
 
 
+
+
+
+
 @login_required(login_url='main:login')
-def chat_requests_inbox(request):
-    """View incoming chat requests"""
+def collaboration_queue(request):
     chat_requests = ChatRequest.objects.filter(
         recipient=request.user, 
         status='pending'
@@ -734,8 +785,7 @@ def chat_requests_inbox(request):
 
 
 @login_required(login_url='main:login')
-def approve_chat_request(request, chat_request_id):
-    """Approve a chat request"""
+def accept_collaboration(request, chat_request_id):
     chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
     chat_req.status = 'approved'
     chat_req.save()
@@ -743,23 +793,21 @@ def approve_chat_request(request, chat_request_id):
 
 
 @login_required(login_url='main:login')
-def reject_chat_request(request, chat_request_id):
-    """Reject a chat request"""
+def decline_collaboration(request, chat_request_id):
     chat_req = get_object_or_404(ChatRequest, pk=chat_request_id, recipient=request.user)
     chat_req.status = 'rejected'
     chat_req.save()
     return redirect('main:unified_chat')
 
 
-# ============================================================================
-# UNIFIED CHAT VIEW
-# ============================================================================
+#  UNI CHAT VIEW
+
+
+
+
 
 @login_required(login_url='main:login')
-def unified_chat(request):
-    """Unified chat interface combining direct messages and chat requests"""
-    
-    # Handle chat request actions
+def conversation_lounge(request):
     if request.method == 'POST':
         if 'approve_chat_request' in request.POST:
             chat_request_id = request.POST.get('chat_request_id')
@@ -774,8 +822,7 @@ def unified_chat(request):
             chat_req.status = 'rejected'
             chat_req.save()
             return redirect('main:unified_chat')
-    
-    # Get all direct messages for user
+
     received_messages = DirectMessage.objects.filter(
         recipient=request.user
     ).order_by('-created_at')
@@ -783,7 +830,7 @@ def unified_chat(request):
         sender=request.user
     ).order_by('-created_at')
     
-    # Group conversations
+
     conversations = {}
     
     for msg in received_messages:
@@ -808,8 +855,7 @@ def unified_chat(request):
                 'messages': []
             }
         conversations[key]['messages'].append(msg)
-    
-    # Add people from approved chat requests
+
     sent_chat_requests = ChatRequest.objects.filter(
         sender=request.user, 
         status='approved'
@@ -838,7 +884,6 @@ def unified_chat(request):
                 'messages': []
             }
     
-    # Serialize messages to JSON for frontend
     for username, conv in conversations.items():
         messages = conv['messages']
         messages_json = json.dumps([{
@@ -852,7 +897,7 @@ def unified_chat(request):
         } for msg in messages])
         conversations[username]['messages_json'] = messages_json
     
-    # Get chat requests
+
     chat_requests = ChatRequest.objects.filter(
         recipient=request.user, 
         status='pending'
@@ -869,36 +914,34 @@ def unified_chat(request):
         'chat_requests': chat_requests,
         'current_user_id': request.user.id
     })
+    
+    
+    
+    
+
+# AUTH VIEWS  
 
 
-# ============================================================================
-# TWO-FACTOR AUTHENTICATION (2FA/TOTP) VIEWS
-# ============================================================================
+
 
 @login_required(login_url='main:login')
-def setup_2fa(request):
-    """Setup TOTP-based two-factor authentication"""
+def fortify_account(request):
     from .auth_2fa import generate_totp_secret, get_totp_uri, generate_qr_code, setup_totp_for_user
-    
-    # Check if user already has 2FA enabled (with error handling)
     try:
         from django_otp.plugins.otp_totp.models import TOTP_DEVICE
         if TOTP_DEVICE.objects.filter(user=request.user, confirmed=True).exists():
             return redirect('main:settings')
     except Exception as e:
-        # If django-otp is not available, continue with setup
+
         pass
     
     if request.method == 'POST':
         action = request.POST.get('action')
         
         if action == 'generate':
-            # Generate new secret
             secret = generate_totp_secret()
             request.session['totp_secret'] = secret
             request.session['totp_step'] = 'verify'
-            
-            # Generate QR code
             uri = get_totp_uri(request.user, secret)
             qr_code = generate_qr_code(uri)
             
@@ -910,14 +953,12 @@ def setup_2fa(request):
             })
         
         elif action == 'verify':
-            # Verify the TOTP code
             secret = request.session.get('totp_secret')
             otp_code = request.POST.get('otp_code', '').replace(' ', '')
             
             if not secret:
                 return redirect('main:setup_2fa')
             
-            # Verify the code
             import pyotp
             totp = pyotp.TOTP(secret)
             if totp.verify(otp_code, valid_window=1):
@@ -926,7 +967,7 @@ def setup_2fa(request):
                 from .auth_2fa import confirm_totp_device
                 confirm_totp_device(request.user)
                 
-                # Clean up session
+
                 request.session.pop('totp_secret', None)
                 request.session.pop('totp_step', None)
                 
@@ -945,24 +986,26 @@ def setup_2fa(request):
     return render(request, 'main/setup_2fa.html', {'step': 'start'})
 
 
+
+
+
+
+
 @login_required(login_url='main:login')
-def disable_2fa(request):
-    """Disable two-factor authentication"""
+def unlock_vault(request):
     from .auth_2fa import disable_totp
     
-    # Check if user has 2FA enabled (with error handling)
     try:
         from django_otp.plugins.otp_totp.models import TOTP_DEVICE
         if not TOTP_DEVICE.objects.filter(user=request.user, confirmed=True).exists():
             return redirect('main:settings')
     except Exception as e:
-        # If django-otp is not available, redirect to settings
         return redirect('main:settings')
     
     if request.method == 'POST':
         password = request.POST.get('password', '')
         
-        # Verify password
+
         from django.contrib.auth import authenticate
         if authenticate(username=request.user.username, password=password):
             disable_totp(request.user)
@@ -978,9 +1021,12 @@ def disable_2fa(request):
     return render(request, 'main/disable_2fa.html')
 
 
-def login_2fa(request):
-    """Second factor authentication during login"""
-    # Get username from session (set during first login attempt)
+
+
+
+
+
+def vault_entry(request):
     username = request.session.get('2fa_username')
     user_id = request.session.get('2fa_user_id')
     
@@ -997,13 +1043,9 @@ def login_2fa(request):
                 'error': 'User not found.'
             })
         
-        # Verify the TOTP code
         from .auth_2fa import verify_totp
         if verify_totp(user, otp_code):
-            # Complete the login
             login(request, user)
-            
-            # Clean up session
             request.session.pop('2fa_username', None)
             request.session.pop('2fa_user_id', None)
             

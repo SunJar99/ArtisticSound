@@ -26,7 +26,7 @@ class Post(models.Model):
         
         try:
             import re
-            # Strip whitespace from URL
+            #This shall remove sspaces from url and extract id
             url = str(self.youtube_url).strip()
             
             if not url:
@@ -34,13 +34,9 @@ class Post(models.Model):
             
             video_id = None
             
-            # Try to find 11-character video ID using regex first (catches all formats)
-            # YouTube video IDs are exactly 11 chars: alphanumeric, dash, underscore
             match = re.search(r'([a-zA-Z0-9_-]{11})', url)
             if match:
                 candidate = match.group(1)
-                # Additional validation to avoid matching random 11-char strings
-                # YouTube IDs typically have mixed case or common patterns
                 if all(c.isalnum() or c in '-_' for c in candidate):
                     return candidate
             
@@ -65,9 +61,9 @@ class Project(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    budget = models.CharField(max_length=100, help_text="e.g., $500-$1000")
-    timeline = models.CharField(max_length=100, help_text="e.g., 2-4 weeks")
-    requirements = models.TextField(help_text="Detailed project requirements")
+    budget = models.CharField(max_length=100, help_text="Example: $500-$1000")
+    timeline = models.CharField(max_length=100, help_text="Example: 2-4 weeks")
+    requirements = models.TextField(help_text="Project requirements")
     tags = models.CharField(max_length=200, blank=True, default='', help_text="Comma-separated tags")
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     is_open = models.BooleanField(default=True)
@@ -122,7 +118,7 @@ class Message(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
-    allow_post_messages = models.BooleanField(default=True, help_text="Allow other users to send you direct messages")
+    allow_post_messages = models.BooleanField(default=True, help_text="Let other users to send you direct messages")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

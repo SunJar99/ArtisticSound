@@ -3,7 +3,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Post, Project, JoinRequest, Message, Comment, DirectMessage, ChatRequest
 
-class CustomUserCreationForm(UserCreationForm):
+
+
+
+class ArtistSignupForm(UserCreationForm):
     email = forms.EmailField(required=True)
     
     class Meta:
@@ -16,7 +19,11 @@ class CustomUserCreationForm(UserCreationForm):
             raise forms.ValidationError('This email is already registered.')
         return email
 
-class PostForm(forms.ModelForm):
+
+
+
+
+class CreationForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ('title', 'description', 'youtube_url', 'tags')
@@ -40,7 +47,10 @@ class PostForm(forms.ModelForm):
             }),
         }
 
-class ProjectForm(forms.ModelForm):
+
+
+
+class CollaborationForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = ('title', 'description', 'category', 'budget', 'timeline', 'requirements', 'tags')
@@ -59,25 +69,27 @@ class ProjectForm(forms.ModelForm):
             }),
             'budget': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., $500-$1000'
+                'placeholder': 'Example: $500-$1000'
             }),
             'timeline': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., 2-4 weeks'
+                'placeholder': 'Example: 2-4 weeks'
             }),
             'requirements': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': 'Detailed project requirements',
+                'placeholder': 'Project requirements',
                 'rows': 5
             }),
             'tags': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'design, urgent, flexible (comma-separated)'
+                'placeholder': 'design, urgent, flexible (seperate with commas, broski)'
             }),
         }
 
 
-class JoinRequestForm(forms.ModelForm):
+
+
+class PitchForm(forms.ModelForm):
     class Meta:
         model = JoinRequest
         fields = ('message',)
@@ -90,7 +102,9 @@ class JoinRequestForm(forms.ModelForm):
         }
 
 
-class MessageForm(forms.ModelForm):
+
+
+class DialogueForm(forms.ModelForm):
     class Meta:
         model = Message
         fields = ('content',)
@@ -103,7 +117,9 @@ class MessageForm(forms.ModelForm):
         }
 
 
-class CommentForm(forms.ModelForm):
+
+
+class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('content',)
@@ -116,7 +132,9 @@ class CommentForm(forms.ModelForm):
         }
 
 
-class DirectMessageForm(forms.ModelForm):
+
+
+class DirectDialogueForm(forms.ModelForm):
     class Meta:
         model = DirectMessage
         fields = ('content',)
@@ -129,7 +147,9 @@ class DirectMessageForm(forms.ModelForm):
         }
 
 
-class ChatRequestForm(forms.ModelForm):
+
+
+class ConversationInviteForm(forms.ModelForm):
     class Meta:
         model = ChatRequest
         fields = ('message',)

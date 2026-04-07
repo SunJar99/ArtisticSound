@@ -1,6 +1,3 @@
-"""
-Custom template filters for ArtisticSound
-"""
 import re
 from django import template
 from django.utils.html import escape
@@ -10,10 +7,6 @@ register = template.Library()
 
 @register.filter
 def linkify(text):
-    """
-    Convert URLs in text to clickable links
-    Usage: {{ message.content|linkify|safe }}
-    """
     if not text:
         return text
     
@@ -24,7 +17,6 @@ def linkify(text):
         url = match.group(1)
         return f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">{escape(url)}</a>'
     
-    # Escape HTML first to prevent injection
     text = escape(text)
     
     # Replace URLs with links
