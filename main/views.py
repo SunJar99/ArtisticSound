@@ -659,6 +659,13 @@ def artist_studio(request):
     except Exception as e:
         pass
     
+    # Calculate unread message count
+    unread_total = 0
+    try:
+        unread_total = DirectMessage.objects.filter(receiver=request.user, is_read=False).count()
+    except:
+        pass
+    
     if request.method == 'POST':
         allow_messages = request.POST.get('allow_post_messages') == 'on'
         profile.allow_post_messages = allow_messages
@@ -667,7 +674,8 @@ def artist_studio(request):
     
     return render(request, 'main/settings.html', {
         'profile': profile,
-        'has_2fa': has_2fa
+        'has_2fa': has_2fa,
+        'unread_total': unread_total
     })
 
 
