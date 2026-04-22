@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-o^psz36(=m4_e+c3leco&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.146']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.146', 'artisticsound.onrender.com', '.onrender.com']
 
 
 # Application definition
