@@ -143,3 +143,16 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] if os.path.exists(os.path.
 
 # WhiteNoise configuration for static file serving in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# CSRF & Security Settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://artisticsound.onrender.com',
+    'https://*.onrender.com',
+]
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
