@@ -1,1 +1,1 @@
-﻿web: sh -c 'python manage.py migrate --no-input && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
+﻿web: bash start.sh
