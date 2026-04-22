@@ -1,1 +1,1 @@
-﻿web: python manage.py migrate --no-input --verbosity 2 && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+﻿web: sh -c 'python manage.py migrate --no-input && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
