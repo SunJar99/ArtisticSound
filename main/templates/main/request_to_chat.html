@@ -177,8 +177,8 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'main:post_list' %}">Browse Posts</a>
                 <a href="{% url 'main:project_list' %}">Find Projects</a>
-                <a href="{% url 'main:unified_chat' %}">💬 Chat</a>
-                <a href="{% url 'main:settings' %}">⚙️ Settings</a>
+                <a href="{% url 'main:unified_chat' %}">Chat</a>
+                <a href="{% url 'main:settings' %}">Settings</a>
                 <a href="{% url 'main:logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'main:register' %}">Create Account</a>
